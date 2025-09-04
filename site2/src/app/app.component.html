@@ -1,3 +1,26 @@
-<router-outlet />
-<h1>CESAR ALBERTO CON ANGULAR</h1>
-<h1>xd</h1>
+<!-- Optional Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container">
+    <a class="navbar-brand" routerLink="/">Mi primera web app</a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/persons">Listar Personas</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Main content container -->
+<div class="container py-4">
+  <router-outlet></router-outlet>
+</div>
