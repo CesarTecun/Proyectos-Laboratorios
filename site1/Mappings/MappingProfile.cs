@@ -4,39 +4,55 @@ using HelloApi.Models.DTOs;
 
 namespace HelloApi.Mappings
 {
+    /// <summary>
+    /// Perfil de AutoMapper para configurar los mapeos entre entidades y DTOs.
+    /// Esta clase hereda de Profile de AutoMapper y define cómo se mapean los objetos entre las capas de la aplicación.
+    /// </summary>
     public class MappingProfile : Profile
     {
+        /// <summary>
+        /// Inicializa una nueva instancia de la clase <see cref="MappingProfile"/>.
+        /// Configura todos los mapeos necesarios para la aplicación.
+        /// </summary>
         public MappingProfile()
         {
             // Mapeo de Order a OrderReadDto
             CreateMap<Order, OrderReadDto>()
+                // Se ignora PersonName porque se establecerá manualmente después del mapeo
                 .ForMember(dest => dest.PersonName, opt => opt.Ignore())
+                // Se ignora Total porque se calculará manualmente después del mapeo
                 .ForMember(dest => dest.Total, opt => opt.Ignore());
 
             // Mapeo de OrderDetail a OrderDetailReadDto
             CreateMap<OrderDetail, OrderDetailReadDto>()
+                // Se ignora ItemName porque se establecerá manualmente después del mapeo
                 .ForMember(dest => dest.ItemName, opt => opt.Ignore())
+                // Se calcula el total multiplicando la cantidad por el precio unitario
                 .ForMember(dest => dest.Total, opt => opt.MapFrom(src => src.Quantity * src.Price));
 
-            // Mapeo de OrderCreateDto a Order (ignorar propiedades que no se deben mapear)
+            // Mapeo de OrderCreateDto a Order
+            // Se ignoran las propiedades que deben ser manejadas por el sistema o el repositorio
             CreateMap<OrderCreateDto, Order>()
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.Number, opt => opt.Ignore())
-                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
-                .ForMember(dest => dest.Person, opt => opt.Ignore())
-                .ForMember(dest => dest.OrderDetails, opt => opt.Ignore());
+                // Se ignoran las propiedades que son generadas por la base de datos
+                .ForMember(dest => dest.Id, opt => opt.Ignore())                // Generado por la base de datos
+                .ForMember(dest => dest.Number, opt => opt.Ignore())            // Generado por el sistema
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())         // Establecido por el servicio
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())         // Establecido por el servicio
+                .ForMember(dest => dest.Person, opt => opt.Ignore())            // Se carga por separado
+                .ForMember(dest => dest.OrderDetails, opt => opt.Ignore());     // Se mapean por separado
 
             // Mapeo de OrderDetailCreateDto a OrderDetail
+            // Se ignoran las propiedades que deben ser manejadas por el sistema o el repositorio
             CreateMap<OrderDetailCreateDto, OrderDetail>()
-                .ForMember(dest => dest.Id, opt => opt.Ignore())
-                .ForMember(dest => dest.OrderId, opt => opt.Ignore())
-                .ForMember(dest => dest.Item, opt => opt.Ignore())
-                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
-                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
-                .ForMember(dest => dest.Total, opt => opt.Ignore())
-                .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())
-                .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore());
+                // Se ignoran las propiedades que son generadas por la base de datos o el sistema
+                .ForMember(dest => dest.Id, opt => opt.Ignore())                // Generado por la base de datos
+                .ForMember(dest => dest.OrderId, opt => opt.Ignore())           // Establecido por el servicio
+                .ForMember(dest => dest.Item, opt => opt.Ignore())              // Se carga por separado
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())         // Establecido por el servicio
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())         // Establecido por el servicio
+                .ForMember(dest => dest.Total, opt => opt.Ignore())             // Se calcula automáticamente
+                .ForMember(dest => dest.CreatedBy, opt => opt.Ignore())         // Establecido por el servicio
+                .ForMember(dest => dest.UpdatedBy, opt => opt.Ignore());        // Establecido por el servicio
         }
     }
 }
