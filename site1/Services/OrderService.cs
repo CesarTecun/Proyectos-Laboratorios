@@ -9,27 +9,52 @@ using HelloApi.Repositories;
 
 namespace HelloApi.Services
 {
-    public class OrderService : IOrderService
+    /// <summary>
+    /// Implementación del servicio para la gestión de órdenes.
+    /// Proporciona la lógica de negocio para operaciones CRUD de órdenes.
+    /// </summary>
+    public class OrderService : IOrderService, IDisposable
     {
         private readonly IOrderRepository _orderRepository;
         private readonly IItemRepository _itemRepository;
         private readonly IPersonRepository _personRepository;
         private readonly IMapper _mapper;
+        private bool _disposed = false;
 
+        /// <summary>
+        /// Inicializa una nueva instancia del servicio de órdenes.
+        /// </summary>
+        /// <param name="orderRepository">Repositorio de órdenes</param>
+        /// <param name="itemRepository">Repositorio de ítems</param>
+        /// <param name="personRepository">Repositorio de personas</param>
+        /// <param name="mapper">Mapeador para conversión entre entidades y DTOs</param>
+        /// <exception cref="ArgumentNullException">Se lanza si alguno de los parámetros es nulo</exception>
         public OrderService(
             IOrderRepository orderRepository,
             IItemRepository itemRepository,
             IPersonRepository personRepository,
             IMapper mapper)
         {
-            _orderRepository = orderRepository;
-            _itemRepository = itemRepository;
-            _personRepository = personRepository;
-            _mapper = mapper;
+            _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
+            _itemRepository = itemRepository ?? throw new ArgumentNullException(nameof(itemRepository));
+            _personRepository = personRepository ?? throw new ArgumentNullException(nameof(personRepository));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
+        /// <summary>
+        /// Crea una nueva orden de forma asíncrona.
+        /// </summary>
+        /// <param name="orderDto">DTO con los datos de la orden a crear</param>
+        /// <returns>DTO con los datos de la orden creada</returns>
+        /// <exception cref="ArgumentNullException">Se lanza si el DTO de la orden es nulo</exception>
+        /// <exception cref="KeyNotFoundException">Se lanza si la persona o algún ítem no existen</exception>
         public async Task<OrderReadDto> CreateOrderAsync(OrderCreateDto orderDto)
         {
+            if (orderDto == null)
+                throw new ArgumentNullException(nameof(orderDto));
+                
+            if (orderDto.OrderDetails == null || !orderDto.OrderDetails.Any())
+                throw new ArgumentException("La orden debe contener al menos un detalle", nameof(orderDto.OrderDetails));
             // Verificar que la persona existe
             var person = await _personRepository.GetByIdAsync(orderDto.PersonId);
             if (person == null)
@@ -86,8 +111,16 @@ namespace HelloApi.Services
             return result;
         }
 
+        /// <summary>
+        /// Obtiene una orden por su identificador único de forma asíncrona.
+        /// </summary>
+        /// <param name="id">Identificador único de la orden</param>
+        /// <returns>DTO con los datos de la orden o null si no se encuentra</returns>
+        /// <exception cref="ArgumentOutOfRangeException">Se lanza si el ID es menor o igual a cero</exception>
         public async Task<OrderReadDto?> GetOrderByIdAsync(int id)
         {
+            if (id <= 0)
+                throw new ArgumentOutOfRangeException(nameof(id), "El ID debe ser mayor que cero");
             var order = await _orderRepository.GetByIdAsync(id);
             if (order == null) return null;
 
@@ -100,6 +133,10 @@ namespace HelloApi.Services
             return result;
         }
 
+        /// <summary>
+        /// Obtiene todas las órdenes existentes de forma asíncrona.
+        /// </summary>
+        /// <returns>Colección de DTOs con los datos de las órdenes</returns>
         public async Task<IEnumerable<OrderReadDto>> GetAllOrdersAsync()
         {
             var orders = await _orderRepository.GetAllAsync();
@@ -119,8 +156,21 @@ namespace HelloApi.Services
             return result;
         }
 
+        /// <summary>
+        /// Actualiza una orden existente de forma asíncrona.
+        /// </summary>
+        /// <param name="id">Identificador único de la orden a actualizar</param>
+        /// <param name="orderDto">DTO con los datos actualizados de la orden</param>
+        /// <returns>True si la actualización fue exitosa, False si la orden no existe</returns>
+        /// <exception cref="ArgumentNullException">Se lanza si el DTO de la orden es nulo</exception>
+        /// <exception cref="KeyNotFoundException">Se lanza si la persona o algún ítem no existen</exception>
         public async Task<bool> UpdateOrderAsync(int id, OrderCreateDto orderDto)
         {
+            if (orderDto == null)
+                throw new ArgumentNullException(nameof(orderDto));
+                
+            if (id <= 0)
+                throw new ArgumentOutOfRangeException(nameof(id), "El ID debe ser mayor que cero");
             // Verificar que la orden existe
             var existingOrder = await _orderRepository.GetByIdAsync(id);
             if (existingOrder == null)
@@ -170,9 +220,50 @@ namespace HelloApi.Services
             return await _orderRepository.UpdateAsync(existingOrder);
         }
 
+        /// <summary>
+        /// Elimina una orden por su identificador único de forma asíncrona.
+        /// </summary>
+        /// <param name="id">Identificador único de la orden a eliminar</param>
+        /// <returns>True si la eliminación fue exitosa, False en caso contrario</returns>
+        /// <exception cref="ArgumentOutOfRangeException">Se lanza si el ID es menor o igual a cero</exception>
         public async Task<bool> DeleteOrderAsync(int id)
         {
+            if (id <= 0)
+                throw new ArgumentOutOfRangeException(nameof(id), "El ID debe ser mayor que cero");
+                
             return await _orderRepository.DeleteAsync(id);
         }
+
+        #region IDisposable Implementation
+        
+        /// <summary>
+        /// Libera los recursos no administrados que usa el objeto y, de forma opcional, libera los recursos administrados.
+        /// </summary>
+        /// <param name="disposing">Es true para liberar tanto recursos administrados como no administrados; es false para liberar únicamente recursos no administrados.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // Liberar recursos administrados
+                    _orderRepository?.Dispose();
+                    _itemRepository?.Dispose();
+                    _personRepository?.Dispose();
+                }
+                _disposed = true;
+            }
+        }
+
+        /// <summary>
+        /// Libera los recursos utilizados por el servicio de órdenes.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        
+        #endregion
     }
 }
