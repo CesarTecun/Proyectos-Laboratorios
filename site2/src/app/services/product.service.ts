@@ -20,12 +20,25 @@ export class ProductService {
   getAll(): Observable<Product[]> {
     return this.http.get<any>(this.apiUrl).pipe(
       map(response => {
+        console.log('Respuesta cruda de la API:', response);
+        let products: any[] = [];
+        
         if (Array.isArray(response)) {
-          return response;
+          products = response;
         } else if (response && Array.isArray(response.$values)) {
-          return response.$values;
+          products = response.$values;
         }
-        return [];
+        
+        console.log('Productos mapeados:', products.map(p => ({
+          id: p.id,
+          name: p.name,
+          price: p.price,
+          description: p.description,
+          createdAt: p.createdAt,
+          updatedAt: p.updatedAt
+        })));
+        
+        return products;
       }),
       catchError(error => {
         console.error('Error al obtener los productos:', error);

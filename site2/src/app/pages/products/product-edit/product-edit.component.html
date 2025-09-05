@@ -37,13 +37,31 @@
             placeholder="0.00" 
             formControlName="price"
             required>
-          <span matTextPrefix>$&nbsp;</span>
+          <span matTextPrefix>Q&nbsp;</span>
           <mat-icon matSuffix>attach_money</mat-icon>
           <mat-error *ngIf="price?.hasError('required')">
             El precio es obligatorio
           </mat-error>
           <mat-error *ngIf="price?.hasError('min')">
             El precio debe ser mayor a 0
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Descripción -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Descripción</mat-label>
+          <textarea 
+            matInput
+            placeholder="Ingrese una descripción del producto"
+            formControlName="description"
+            cdkTextareaAutosize
+            cdkAutosizeMinRows="3"
+            cdkAutosizeMaxRows="5">
+          </textarea>
+          <mat-icon matSuffix>description</mat-icon>
+          <mat-hint>Máximo 500 caracteres</mat-hint>
+          <mat-error *ngIf="description?.hasError('maxlength')">
+            La descripción no puede exceder los 500 caracteres
           </mat-error>
         </mat-form-field>
 

@@ -18,6 +18,16 @@ namespace MessageApi.Models.DTOs
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
+        /// Precio del producto.
+        /// </summary>
+        public decimal Price { get; set; }
+
+        /// <summary>
+        /// Descripción detallada del producto.
+        /// </summary>
+        public string? Description { get; set; }
+
+        /// <summary>
         /// Fecha y hora en que se creó el registro del producto.
         /// </summary>
         public DateTime CreatedAt { get; set; }

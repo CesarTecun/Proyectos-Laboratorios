@@ -25,6 +25,20 @@ namespace MessageApi.Models
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
+        /// Precio del producto.
+        /// </summary>
+        [Required(ErrorMessage = "El precio es obligatorio")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El precio debe ser mayor a cero")]
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Price { get; set; }
+
+        /// <summary>
+        /// Descripción detallada del producto.
+        /// </summary>
+        [StringLength(500, ErrorMessage = "La descripción no puede exceder los 500 caracteres")]
+        public string Description { get; set; } = string.Empty;
+
+        /// <summary>
         /// Fecha y hora en que se creó el registro del producto.
         /// Se establece automáticamente al crear el registro.
         /// </summary>

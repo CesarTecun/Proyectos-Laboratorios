@@ -48,6 +48,15 @@ namespace MessageApi.Mappings
                 .ForMember(dest => dest.Person, opt => opt.Ignore())            // Se carga por separado
                 .ForMember(dest => dest.OrderDetails, opt => opt.Ignore());     // Se mapean por separado
 
+            // Mapeo de Product a ProductReadDto
+            CreateMap<Product, ProductReadDto>();
+            
+            // Mapeo de ProductCreateDto a Product
+            CreateMap<ProductCreateDto, Product>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
+
             // Mapeo de OrderDetailCreateDto a OrderDetail
             // Se ignoran las propiedades que deben ser manejadas por el sistema o el repositorio
             CreateMap<OrderDetailCreateDto, OrderDetail>()

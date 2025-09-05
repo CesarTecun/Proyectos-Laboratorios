@@ -77,7 +77,7 @@ import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-d
 })
 export class ProductListComponent implements OnInit {
   // Columnas a mostrar en la tabla
-  displayedColumns: string[] = ['id', 'name', 'price', 'createdAt', 'updatedAt', 'actions'];
+  displayedColumns: string[] = ['id', 'name', 'price', 'description', 'createdAt', 'updatedAt', 'actions'];
   
   // Fuente de datos para la tabla
   dataSource: Product[] = [];
@@ -121,6 +121,15 @@ export class ProductListComponent implements OnInit {
     this.isLoading = true;
     this.productService.getAll().subscribe({
       next: (products) => {
+        console.log('Productos recibidos de la API:', JSON.stringify(products, null, 2));
+        console.log('Primer producto:', products[0] ? {
+          id: products[0].id,
+          name: products[0].name,
+          price: products[0].price,
+          description: products[0].description,
+          createdAt: products[0].createdAt,
+          updatedAt: products[0].updatedAt
+        } : 'No hay productos');
         this.dataSource = products;
         this.isLoading = false;
       },
