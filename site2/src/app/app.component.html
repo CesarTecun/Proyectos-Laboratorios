@@ -1,54 +1,210 @@
-<nav class="bg-blue-600 text-white shadow-lg">
+<!-- Main Navigation -->
+<nav class="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg" role="navigation" aria-label="Navegación principal">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between h-16">
-      <div class="flex">
+    <div class="flex justify-between h-20">
+      <!-- Logo and Main Menu -->
+      <div class="flex items-center">
+        <!-- Logo -->
         <div class="flex-shrink-0 flex items-center">
-          <a routerLink="/" class="text-xl font-bold text-white">Sistema de Órdenes</a>
+          <a routerLink="/" class="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 rounded-md p-1">
+            <span class="text-2xl font-extrabold text-white">
+              <span class="sr-only">OrderPro</span>
+              <span aria-hidden="true">Order<span class="text-blue-200">Pro</span></span>
+            </span>
+          </a>
         </div>
-        <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+        
+        <!-- Desktop Navigation -->
+        <div class="hidden md:ml-10 md:flex md:space-x-1">
           <a routerLink="/orders" 
-             routerLinkActive="bg-blue-700" 
-             class="border-transparent text-white hover:bg-blue-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-            Órdenes
+             [routerLinkActive]="['bg-blue-700', 'text-white']"
+             class="px-3 py-2 rounded-md text-sm font-medium text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700"
+             role="menuitem">
+            <span class="flex items-center">
+              <svg class="mr-1.5 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+              Órdenes
+            </span>
           </a>
           <a routerLink="/products" 
-             routerLinkActive="bg-blue-700" 
-             class="border-transparent text-white hover:bg-blue-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-            Productos
+             [routerLinkActive]="['bg-blue-700', 'text-white']"
+             class="px-3 py-2 rounded-md text-sm font-medium text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700"
+             role="menuitem">
+            <span class="flex items-center">
+              <svg class="mr-1.5 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+              </svg>
+              Productos
+            </span>
           </a>
           <a routerLink="/customers" 
-             routerLinkActive="bg-blue-700" 
-             class="border-transparent text-white hover:bg-blue-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
-            Clientes
+             [routerLinkActive]="['bg-blue-700', 'text-white']"
+             class="px-3 py-2 rounded-md text-sm font-medium text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700"
+             role="menuitem">
+            <span class="flex items-center">
+              <svg class="mr-1.5 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+              </svg>
+              Clientes
+            </span>
           </a>
         </div>
       </div>
-    </div>
 
-    <!-- Mobile menu -->
-    <div class="sm:hidden" id="mobile-menu">
-      <div class="pt-2 pb-3 space-y-1">
-        <a routerLink="/orders" 
-           routerLinkActive="bg-blue-700" 
-           class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-white hover:bg-blue-700 hover:border-blue-500">
-          Órdenes
-        </a>
-        <a routerLink="/products" 
-           routerLinkActive="bg-blue-700" 
-           class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-white hover:bg-blue-700 hover:border-blue-500">
-          Productos
-        </a>
-        <a routerLink="/customers" 
-           routerLinkActive="bg-blue-700" 
-           class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-white hover:bg-blue-700 hover:border-blue-500">
-          Clientes
-        </a>
+      <!-- User Menu -->
+      <div class="hidden md:ml-4 md:flex-shrink-0 md:flex md:items-center">
+        <!-- Notifications (Icon only, no dropdown) -->
+        <div class="relative ml-4">
+          <button 
+            type="button"
+            (click)="$event.stopPropagation()"
+            (keydown.enter)="$event.stopPropagation()"
+            (keydown.space)="$event.stopPropagation()"
+            class="p-1 rounded-full text-blue-200 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-700 focus:ring-white relative"
+            title="Notificaciones (próximamente)"
+            disabled>
+            <span class="sr-only">Notificaciones</span>
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <!-- Profile Dropdown -->
+        <div class="ml-4 relative">
+          <div>
+            <button 
+              type="button" 
+              (click)="toggleUserMenu($event)"
+              (keydown.enter)="toggleUserMenu($event)"
+              (keydown.space)="$event.preventDefault(); toggleUserMenu($event)"
+              class="flex items-center max-w-xs rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-700 focus:ring-white" 
+              [attr.aria-expanded]="isUserMenuOpen"
+              aria-haspopup="true"
+              id="user-menu-button">
+              <span class="sr-only">Abrir menú de usuario</span>
+              <div class="h-8 w-8 rounded-full bg-blue-800 flex items-center justify-center text-white font-semibold ring-2 ring-white">
+                {{ (userInitials$ | async) || 'U' }}
+              </div>
+              <span class="ml-2 text-white font-medium hidden lg:inline">
+                {{ (userName$ | async) || 'Usuario' }}
+              </span>
+              <svg class="ml-1 h-4 w-4 text-blue-200" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Dropdown menu -->
+          <div *ngIf="isUserMenuOpen" 
+               class="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50" 
+               role="menu" 
+               aria-orientation="vertical" 
+               aria-labelledby="user-menu-button"
+               tabindex="-1"
+               (click)="$event.stopPropagation()">
+            <div class="py-1" role="none">
+              <div class="px-4 py-3 border-b border-gray-100">
+                <p class="text-sm text-gray-900 font-medium">{{ (userName$ | async) || 'Usuario' }}</p>
+                <p class="text-xs text-gray-500 truncate">{{ (userEmail$ | async) || 'usuario@ejemplo.com' }}</p>
+              </div>
+              <button 
+                (click)="logout()" 
+                class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-900" 
+                role="menuitem" 
+                tabindex="-1"
+                [disabled]="isLoading">
+                <span class="flex items-center">
+                  <svg class="mr-2 h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                  </svg>
+                  <span>Cerrar sesión</span>
+                  <span *ngIf="isLoading" class="ml-2">
+                    <svg class="animate-spin h-4 w-4 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="sr-only">Cerrando sesión...</span>
+                  </span>
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botón móvil -->
+      <div class="-mr-2 flex items-center md:hidden">
+        <button type="button" 
+                (click)="toggleMobileMenu()"
+                class="inline-flex items-center justify-center p-2 rounded-md text-blue-200 hover:text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-white" 
+                aria-controls="mobile-menu" 
+                [attr.aria-expanded]="isMobileMenuOpen">
+          <span class="sr-only">Abrir menú principal</span>
+          <svg *ngIf="!isMobileMenuOpen" class="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <svg *ngIf="isMobileMenuOpen" class="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menú móvil -->
+  <div class="md:hidden transition-all duration-300 ease-in-out" [class.hidden]="!isMobileMenuOpen" id="mobile-menu">
+    <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+      <a routerLink="/orders" 
+         [routerLinkActive]="['bg-blue-700', 'text-white']"
+         (click)="isMobileMenuOpen = false"
+         class="block px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:bg-blue-700 hover:text-white">
+        Órdenes
+      </a>
+      <a routerLink="/products" 
+         [routerLinkActive]="['bg-blue-700', 'text-white']"
+         (click)="isMobileMenuOpen = false"
+         class="block px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:bg-blue-700 hover:text-white">
+        Productos
+      </a>
+      <a routerLink="/customers" 
+         [routerLinkActive]="['bg-blue-700', 'text-white']"
+         (click)="isMobileMenuOpen = false"
+         class="block px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:bg-blue-700 hover:text-white">
+        Clientes
+      </a>
+    </div>
+    <div class="pt-4 pb-3 border-t border-blue-800">
+      <div class="flex items-center px-5">
+        <div class="flex-shrink-0">
+          <div class="h-10 w-10 rounded-full bg-blue-800 flex items-center justify-center text-white font-semibold">
+            {{ (userName$ | async)?.charAt(0) || 'U' }}
+          </div>
+        </div>
+        <div class="ml-3">
+          <div class="text-base font-medium text-white">{{ (userName$ | async) || 'Usuario' }}</div>
+          <div class="text-sm font-medium text-blue-200">Ver perfil</div>
+        </div>
+        <button class="ml-auto flex-shrink-0 p-1 rounded-full text-blue-200 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-white">
+          <span class="sr-only">Ver notificaciones</span>
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="mt-3 px-2 space-y-1">
+        <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-blue-200 hover:text-white hover:bg-blue-700">Tu perfil</a>
+        <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-blue-200 hover:text-white hover:bg-blue-700">Configuración</a>
+        <a href="#" (click)="logout()" class="block px-3 py-2 rounded-md text-base font-medium text-blue-200 hover:text-white hover:bg-blue-700">Cerrar sesión</a>
       </div>
     </div>
   </div>
 </nav>
 
-<!-- Main content container -->
-<div class="container py-4">
-  <router-outlet></router-outlet>
+<!-- Main content container with smooth transition -->
+<div class="min-h-screen bg-gray-50">
+  <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8 transition-all duration-300">
+    <router-outlet></router-outlet>
+  </div>
 </div>

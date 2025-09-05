@@ -1,15 +1,108 @@
 <!doctype html>
-<html lang="en">
+<html lang="es" class="h-full">
 <head>
   <meta charset="utf-8">
-  <title>Site 1</title>
+  <title>OrderPro - Sistema de Gestión de Pedidos</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- Meta Tags para SEO -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="description" content="OrderPro - Sistema de gestión de pedidos para pequeñas y medianas empresas. Administra órdenes, clientes y productos de manera eficiente.">
+  <meta name="theme-color" content="#1e40af">
+  <meta name="author" content="OrderPro">
+  <meta name="robots" content="index, follow">
+  <meta name="keywords" content="gestión de pedidos, órdenes, facturación, inventario, pymes">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://orderpro.example.com/">
+  <meta property="og:title" content="OrderPro - Sistema de Gestión de Pedidos">
+  <meta property="og:description" content="Sistema de gestión de pedidos para pequeñas y medianas empresas. Administra órdenes, clientes y productos de manera eficiente.">
+  <meta property="og:image" content="https://orderpro.example.com/assets/images/og-image.jpg">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://orderpro.example.com/">
+  <meta property="twitter:title" content="OrderPro - Sistema de Gestión de Pedidos">
+  <meta property="twitter:description" content="Sistema de gestión de pedidos para pequeñas y medianas empresas.">
+  <meta property="twitter:image" content="https://orderpro.example.com/assets/images/og-image.jpg">
+
+  <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
+  <link rel="manifest" href="site.webmanifest">
+  <meta name="msapplication-TileColor" content="#1e40af">
+  
+  <!-- Preconexiones para mejorar el rendimiento -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Precargar fuentes críticas -->
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap"></noscript>
+  
+  <!-- Material Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons&display=swap">
+  
+  <!-- Preload de estilos críticos -->
+  <style>
+    /* Estilos críticos inline para renderizado más rápido */
+    .app-loading {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background-color: #f8fafc;
+    }
+    .app-loading .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(59, 130, 246, 0.2);
+      border-radius: 50%;
+      border-top-color: #3b82f6;
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body class="mat-typography">
-  <app-root></app-root>
+  <!-- Contenido de carga inicial -->
+  <div class="app-loading" id="app-loading">
+    <div class="spinner"></div>
+    <p class="mt-4 text-gray-600">Cargando OrderPro...</p>
+  </div>
+  
+  <!-- Raíz de la aplicación -->
+  <app-root>
+    <div class="app-loading">
+      <div class="spinner"></div>
+      <p class="mt-4 text-gray-600">Iniciando aplicación...</p>
+    </div>
+  </app-root>
+  
+  <!-- Script para ocultar el loader cuando la aplicación esté lista -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Ocultar el loader cuando la aplicación esté lista
+      if (window['appRef'] && window['appRef'].isStable) {
+        document.getElementById('app-loading').style.display = 'none';
+      } else {
+        // Si la aplicación tarda en cargar, ocultar el loader después de 3 segundos
+        setTimeout(function() {
+          const loader = document.getElementById('app-loading');
+          if (loader) loader.style.opacity = '0';
+          setTimeout(function() {
+            if (loader) loader.style.display = 'none';
+          }, 300);
+        }, 3000);
+      }
+    });
+  </script>
 </body>
 </html>

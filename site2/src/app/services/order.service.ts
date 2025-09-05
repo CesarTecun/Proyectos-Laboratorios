@@ -20,6 +20,7 @@ export interface OrderReadDto {
   personId: number;
   orderDate: string;
   totalAmount: number;
+  status?: string; // Added status as an optional property
   orderItems: {
     id: number;
     itemId: number;
@@ -38,7 +39,21 @@ export class OrderService {
   constructor(private http: HttpClient) {}
 
   getOrders(): Observable<OrderReadDto[]> {
-    return this.http.get<OrderReadDto[]>(this.apiUrl);
+    return new Observable(observer => {
+      this.http.get<any>(this.apiUrl).subscribe({
+        next: (response) => {
+          // Handle the response with $values property or direct array
+          const data = response.$values || response || [];
+          observer.next(Array.isArray(data) ? data : []);
+          observer.complete();
+        },
+        error: (err) => {
+          console.error('Error in OrderService:', err);
+          observer.next([]);
+          observer.complete();
+        }
+      });
+    });
   }
 
   getOrder(id: number): Observable<OrderReadDto> {

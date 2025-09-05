@@ -1,39 +1,191 @@
-<div class="container mx-auto p-4">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">Lista de Órdenes</h1>
-    <a routerLink="/orders/new" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-      Nueva Orden
-    </a>
-  </div>
-  
-  <div class="bg-white shadow-md rounded-lg overflow-hidden">
-    <table class="min-w-full">
-      <thead class="bg-gray-100">
-        <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
-        <tr *ngFor="let order of orders" class="hover:bg-gray-50">
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ order.id }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ order.orderDate | date:'short' }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Cliente #{{ order.personId }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ order.totalAmount | number:'1.2-2' }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-            <a [routerLink]="['/orders/edit', order.id]" class="text-indigo-600 hover:text-indigo-900 mr-4">Editar</a>
-            <button (click)="deleteOrder(order.id)" class="text-red-600 hover:text-red-900">Eliminar</button>
-          </td>
-        </tr>
-        <tr *ngIf="orders.length === 0">
-          <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
-            No hay órdenes registradas
-          </td>
-        </tr>
-      </tbody>
-    </table>
+<!-- Contenedor principal con fondo gris claro -->
+<div class="min-h-screen bg-gray-50 p-6">
+  <!-- Tarjeta contenedora -->
+  <div class="max-w-7xl mx-auto">
+    <!-- Encabezado con título y botón de acción -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Gestión de Órdenes</h1>
+        <p class="text-gray-600 text-sm">Administra y revisa todas las órdenes del sistema</p>
+      </div>
+      <a routerLink="/orders/new" 
+         class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
+        Nueva Orden
+      </a>
+    </div>
+
+    <!-- Tarjeta de la tabla -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+      <!-- Barra de búsqueda y filtros -->
+      <div class="p-4 border-b border-gray-100">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-grow">
+            <input type="text" 
+                   class="block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                   placeholder="Buscar órdenes...">
+          </div>
+          <select class="block w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option>Filtrar por estado</option>
+            <option>Pendiente</option>
+            <option>Completada</option>
+            <option>Cancelada</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tabla de órdenes -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                # Orden
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Fecha
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Cliente
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Total
+              </th>
+              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Acciones
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <!-- Loading State with Skeleton -->
+            <tr *ngIf="isLoading">
+              <td colspan="5" class="px-6 py-4">
+                <div class="space-y-4">
+                  <!-- Skeleton Rows -->
+                  <div class="animate-pulse space-y-3">
+                    <div *ngFor="let i of [1,2,3]" class="grid grid-cols-12 gap-4">
+                      <div class="h-4 bg-gray-200 rounded col-span-2"></div>
+                      <div class="h-4 bg-gray-200 rounded col-span-3"></div>
+                      <div class="h-4 bg-gray-200 rounded col-span-2"></div>
+                      <div class="h-4 bg-gray-200 rounded col-span-3"></div>
+                      <div class="h-4 bg-gray-200 rounded col-span-2"></div>
+                    </div>
+                  </div>
+                  <!-- Loading Spinner -->
+                  <div class="flex justify-center py-4">
+                    <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Mensaje cuando no hay órdenes -->
+            <tr *ngIf="!isLoading && orders.length === 0">
+              <td colspan="5" class="px-6 py-8 text-center">
+                <div class="text-gray-500">
+                  <h3 class="text-base font-medium text-gray-900">No hay órdenes</h3>
+                  <p class="mt-1 text-sm text-gray-500">Comienza creando una nueva orden.</p>
+                  <div class="mt-4">
+                    <a routerLink="/orders/new" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                      Crear orden
+                    </a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Lista de órdenes -->
+            <tr *ngFor="let order of orders" class="hover:bg-gray-50 transition-colors duration-150">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">#{{ order.id }}</div>
+                <div class="text-xs text-gray-500">Orden {{ order.status || 'Pendiente' }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">{{ order.orderDate | date:'mediumDate' }}</div>
+                <div class="text-xs text-gray-500">{{ order.orderDate | date:'shortTime' }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-blue-100 rounded-full">
+                    <span class="text-blue-600 font-medium">{{ order.personId ? 'C' + order.personId.toString().charAt(0) : '?' }}</span>
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900">Cliente #{{ order.personId || 'N/A' }}</div>
+                    <div class="text-xs text-gray-500">Ver perfil</div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-semibold text-gray-900">${{ order.totalAmount | number:'1.2-2' }}</div>
+                <div class="text-xs text-gray-500">3 artículos</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <div class="flex justify-end space-x-1">
+                  <button [routerLink]="['/orders', order.id]" 
+                          class="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-blue-50 transition-colors"
+                          title="Ver detalles">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                  </button>
+                  <button [routerLink]="['/orders/edit', order.id]" 
+                          class="text-indigo-600 hover:text-indigo-900 p-2 rounded-full hover:bg-indigo-50 transition-colors"
+                          title="Editar orden">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                  </button>
+                  <button (click)="deleteOrder(order.id)" 
+                          class="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50 transition-colors"
+                          title="Eliminar orden">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pie de tabla con paginación -->
+      <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+        <div class="flex-1 flex justify-between sm:hidden">
+          <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            Anterior
+          </button>
+          <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+            Siguiente
+          </button>
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm text-gray-700">
+              Mostrando <span class="font-medium">1</span> a <span class="font-medium">10</span> de <span class="font-medium">20</span> resultados
+            </p>
+          </div>
+          <div>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+              <a href="#" class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                Anterior
+              </a>
+              <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                1
+              </a>
+              <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                2
+              </a>
+              <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
+                3
+              </a>
+              <a href="#" class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                Siguiente
+              </a>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

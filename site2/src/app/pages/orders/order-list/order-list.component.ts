@@ -24,17 +24,18 @@ export class OrderListComponent implements OnInit {
   loadOrders(): void {
     this.isLoading = true;
     this.orderService.getOrders().subscribe(
-      (data: OrderReadDto[]) => {
-        console.log('Orders data received:', data);
-        // Ensure data is an array before assignment
+      (response: any) => {
+        console.log('Orders data received:', response);
+        // Handle the response with $values property
+        const data = response.$values || response || [];
         this.orders = Array.isArray(data) ? data : [];
+        console.log('Processed orders:', this.orders);
         this.isLoading = false;
       },
       (err: any) => {
         console.error('Error loading orders:', err);
         this.error = 'Error al cargar las órdenes';
         this.isLoading = false;
-        // Initialize empty array on error to prevent template errors
         this.orders = [];
       }
     );
