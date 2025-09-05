@@ -1,78 +1,67 @@
 <h2 mat-dialog-title class="mb-3">
-  {{ data ? 'Edit' : 'Add' }} Person
+  {{ data ? 'Editar' : 'Nueva' }} persona
 </h2>
 
 <form [formGroup]="personForm" (ngSubmit)="onSubmit()" class="container">
   <mat-dialog-content class="row">
+    <!-- Nombre -->
     <div class="col-md-6 mb-3">
       <mat-form-field appearance="outline" class="w-100">
-        <mat-label>First Name</mat-label>
+        <mat-label>Nombre</mat-label>
         <input matInput formControlName="firstName" required maxlength="50" />
-        <mat-hint align="end">{{personForm.get('firstName')?.value?.length || 0}}/50</mat-hint>
+        <mat-hint align="end">{{ personForm.get('firstName')?.value?.length || 0 }}/50</mat-hint>
         <mat-error *ngIf="personForm.get('firstName')?.hasError('required')">
-          First name is required
+          El nombre es obligatorio
         </mat-error>
         <mat-error *ngIf="personForm.get('firstName')?.hasError('maxlength')">
-          Maximum 50 characters allowed
+          Máximo 50 caracteres
         </mat-error>
       </mat-form-field>
     </div>
-    
+
+    <!-- Apellido -->
     <div class="col-md-6 mb-3">
       <mat-form-field appearance="outline" class="w-100">
-        <mat-label>Last Name</mat-label>
+        <mat-label>Apellido</mat-label>
         <input matInput formControlName="lastName" required maxlength="50" />
-        <mat-hint align="end">{{personForm.get('lastName')?.value?.length || 0}}/50</mat-hint>
+        <mat-hint align="end">{{ personForm.get('lastName')?.value?.length || 0 }}/50</mat-hint>
         <mat-error *ngIf="personForm.get('lastName')?.hasError('required')">
-          Last name is required
+          El apellido es obligatorio
         </mat-error>
         <mat-error *ngIf="personForm.get('lastName')?.hasError('maxlength')">
-          Maximum 50 characters allowed
+          Máximo 50 caracteres
         </mat-error>
       </mat-form-field>
     </div>
-    
+
+    <!-- Correo -->
     <div class="col-12 mb-3">
       <mat-form-field appearance="outline" class="w-100">
-        <mat-label>Email</mat-label>
+        <mat-label>Correo electrónico</mat-label>
         <input matInput type="email" formControlName="email" required maxlength="100" />
-        <mat-hint align="end">{{personForm.get('email')?.value?.length || 0}}/100</mat-hint>
+        <mat-hint align="end">{{ personForm.get('email')?.value?.length || 0 }}/100</mat-hint>
         <mat-error *ngIf="personForm.get('email')?.hasError('required')">
-          Email is required
+          El correo es obligatorio
         </mat-error>
         <mat-error *ngIf="personForm.get('email')?.hasError('email')">
-          Please enter a valid email
+          Ingresa un correo válido
         </mat-error>
         <mat-error *ngIf="personForm.get('email')?.hasError('maxlength')">
-          Maximum 100 characters allowed
+          Máximo 100 caracteres
         </mat-error>
-      </mat-form-field>
-    </div>
-    
-    <div class="col-12 mb-3">
-      <mat-form-field appearance="outline" class="w-100">
-        <mat-label>Phone</mat-label>
-        <input matInput formControlName="phone" />
-      </mat-form-field>
-    </div>
-    
-    <div class="col-12 mb-3">
-      <mat-form-field appearance="outline" class="w-100">
-        <mat-label>Address</mat-label>
-        <textarea matInput formControlName="address"></textarea>
       </mat-form-field>
     </div>
   </mat-dialog-content>
 
   <mat-dialog-actions align="end" class="mt-3">
-    <button mat-button type="button" mat-dialog-close>Cancel</button>
+    <button mat-button type="button" (click)="onCancel()">Cancelar</button>
     <button
       mat-raised-button
       color="primary"
       type="submit"
       [disabled]="personForm.invalid || personForm.pristine"
     >
-      {{ data ? 'Update' : 'Save' }}
+      {{ data ? 'Actualizar' : 'Guardar' }}
     </button>
   </mat-dialog-actions>
 </form>

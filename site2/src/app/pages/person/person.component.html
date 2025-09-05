@@ -1,101 +1,95 @@
 <div class="container mt-4">
+  <!-- Encabezado -->
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">People</h2>
+    <h2 class="mb-0">Personas</h2>
     <button mat-raised-button color="primary" (click)="openDialog()">
-      <mat-icon>add</mat-icon> Add Person
+      <mat-icon aria-hidden="true">person_add</mat-icon>&nbsp;Nueva persona
     </button>
   </div>
 
+  <!-- Buscador -->
   <mat-form-field appearance="outline" class="w-100 mb-3">
-    <mat-label>Search</mat-label>
+    <mat-label>Buscar</mat-label>
     <input
       matInput
       #input
       (keyup)="applyFilter($event)"
-      placeholder="Search people..."
+      placeholder="Filtra por nombre, apellido o correo…"
+      autocomplete="off"
+      aria-label="Buscar personas"
     />
-    <mat-icon matSuffix>search</mat-icon>
+    <button *ngIf="input.value" matSuffix mat-icon-button aria-label="Limpiar búsqueda"
+            (click)="input.value=''; applyFilter($event)">
+      <mat-icon>close</mat-icon>
+    </button>
+    <mat-icon matSuffix aria-hidden="true">search</mat-icon>
   </mat-form-field>
 
+  <!-- Tabla -->
   <div class="table-responsive">
-    <table
-      mat-table
-      [dataSource]="dataSource"
-      matSort
-      class="mat-elevation-z1 w-100"
-    >
-      <!-- ID Column -->
+    <table mat-table [dataSource]="dataSource" matSort
+           class="mat-elevation-z1 w-100 compact-table" aria-label="Tabla de personas">
+
+      <!-- ID (solo lectura, estrecha) -->
       <ng-container matColumnDef="id">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
-        <td mat-cell *matCellDef="let person">{{ person.id }}</td>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header class="col-id">ID</th>
+        <td mat-cell *matCellDef="let p" class="col-id">{{ p.id }}</td>
       </ng-container>
 
-      <!-- First Name Column -->
+      <!-- Nombre -->
       <ng-container matColumnDef="firstName">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>First Name</th>
-        <td mat-cell *matCellDef="let person">{{ person.firstName || 'N/A' }}</td>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Nombre</th>
+        <td mat-cell *matCellDef="let p" class="nowrap">{{ p.firstName || '—' }}</td>
       </ng-container>
 
-      <!-- Last Name Column -->
+      <!-- Apellido -->
       <ng-container matColumnDef="lastName">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Last Name</th>
-        <td mat-cell *matCellDef="let person">{{ person.lastName || 'N/A' }}</td>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Apellido</th>
+        <td mat-cell *matCellDef="let p" class="nowrap">{{ p.lastName || '—' }}</td>
       </ng-container>
 
-      <!-- Email Column -->
+      <!-- Correo -->
       <ng-container matColumnDef="email">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Email</th>
-        <td mat-cell *matCellDef="let person">
-          <a [href]="'mailto:' + person.email">{{ person.email || 'N/A' }}</a>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Correo</th>
+        <td mat-cell *matCellDef="let p" class="ellipsis">
+          <a *ngIf="p.email; else noEmail" [href]="'mailto:' + p.email">{{ p.email }}</a>
+          <ng-template #noEmail><span class="text-muted">Sin correo</span></ng-template>
         </td>
       </ng-container>
 
-      <!-- Created At Column -->
-      <ng-container matColumnDef="createdAt">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Created At</th>
-        <td mat-cell *matCellDef="let person">{{ (person.createdAt | date:'medium') || 'N/A' }}</td>
-      </ng-container>
-
-      <!-- Action Column -->
+      <!-- Acciones (Editar y Eliminar) -->
       <ng-container matColumnDef="action">
-        <th mat-header-cell *matHeaderCellDef class="text-center">Actions</th>
-        <td mat-cell *matCellDef="let person" class="text-center">
-          <button
-            mat-icon-button
-            color="primary"
-            (click)="openDialog(person)"
-            matTooltip="Edit"
-            aria-label="Edit person"
-          >
-            <mat-icon>edit</mat-icon>
+        <th mat-header-cell *matHeaderCellDef class="text-center">Acciones</th>
+        <td mat-cell *matCellDef="let p" class="text-center">
+          <button mat-icon-button color="primary" (click)="openDialog(p)"
+                  matTooltip="Editar" aria-label="Editar persona" class="me-1">
+            <mat-icon aria-hidden="true">edit</mat-icon>
           </button>
-          <button
-            mat-icon-button
-            color="warn"
-            (click)="deletePerson(person.id)"
-            matTooltip="Delete"
-            aria-label="Delete person"
-          >
-            <mat-icon>delete</mat-icon>
+          <button mat-icon-button color="warn" (click)="$event.stopPropagation(); deletePerson(p.id)"
+                  matTooltip="Eliminar" aria-label="Eliminar persona">
+            <mat-icon aria-hidden="true">delete</mat-icon>
           </button>
         </td>
       </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <!-- Filas -->
+      <tr mat-header-row *matHeaderRowDef="displayedColumns" class="sticky-header"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
 
-      <!-- Row shown when there is no matching data. -->
+      <!-- Estado vacío -->
       <tr class="mat-row" *matNoDataRow>
-        <td class="mat-cell text-center py-3" [colSpan]="displayedColumns.length">
-          No data matching the filter "{{ input.value }}"
+        <td class="mat-cell text-center py-4 text-muted" [attr.colspan]="displayedColumns.length">
+          No hay resultados para “{{ input.value || '' }}”.
         </td>
       </tr>
     </table>
   </div>
 
+  <!-- Paginador -->
   <mat-paginator
     [pageSizeOptions]="[5, 10, 25, 100]"
-    aria-label="Select page of people"
+    [pageSize]="5"
     showFirstLastButtons
-  ></mat-paginator>
+    aria-label="Selector de página">
+  </mat-paginator>
 </div>

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, Inject } from '@angular/core';
+import { Component, inject, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,7 +7,7 @@ import { MatInputModule } from '@angular/material/input';
 import { PersonService } from '../../services/person.service';
 import { Person, CreatePersonDto, UpdatePersonDto } from '../../models/person';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogActions, MatDialogContent } from '@angular/material/dialog';
-import swal from 'sweetalert';
+import Swal from 'sweetalert2'; // <-- usa sweetalert2, no 'sweetalert'
 
 @Component({
   selector: 'app-person-edit',
@@ -22,87 +22,77 @@ import swal from 'sweetalert';
     MatDialogContent
   ],
   templateUrl: './person-edit.component.html',
-  styleUrl: './person-edit.component.css'
+  styleUrls: ['./person-edit.component.css'] // <-- plural
 })
-export class PersonEditComponent {
+export class PersonEditComponent implements OnInit {
 
   private personService = inject(PersonService);
   private dialogRef = inject(MatDialogRef<PersonEditComponent>);
   private fb = inject(FormBuilder);
+
   personForm: FormGroup;
-  
-  constructor(@Inject(MAT_DIALOG_DATA) public data: Person) {
+
+  constructor(@Inject(MAT_DIALOG_DATA) public data: Person | null) {
     this.personForm = this.fb.group({
       firstName: ['', [Validators.required, Validators.maxLength(50)]],
-      lastName: ['', [Validators.required, Validators.maxLength(50)]],
-      email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
-      phone: [''],
-      address: ['']
+      lastName:  ['', [Validators.required, Validators.maxLength(50)]],
+      email:     ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
     });
   }
 
   ngOnInit() {
     if (this.data) {
-      // Split the name into first and last name if it exists
-      const personData = { ...this.data };
-      if (personData.firstName === undefined && 'name' in personData) {
-        // Handle case where we might have the old name field
-        const nameParts = (personData as any).name?.split(' ') || ['', ''];
-        personData.firstName = nameParts[0];
-        personData.lastName = nameParts.slice(1).join(' ');
+      // Compatibilidad por si venía un campo 'name' antiguo
+      const p: any = { ...this.data };
+      if (p.firstName === undefined && 'name' in p) {
+        const parts = (p.name as string)?.trim().split(/\s+/) ?? [];
+        p.firstName = parts[0] ?? '';
+        p.lastName  = parts.slice(1).join(' ') ?? '';
       }
-      this.personForm.patchValue(personData);
+      this.personForm.patchValue({
+        firstName: p.firstName ?? '',
+        lastName:  p.lastName  ?? '',
+        email:     p.email     ?? '',
+      });
     }
   }
+  
+  onCancel() {
+    this.dialogRef.close(false); // puedes pasar false si quieres indicar "cancelado"
+  }
+  
 
   onSubmit() {
-    if (this.personForm.invalid) {
-      return;
-    }
+    if (this.personForm.invalid) return;
 
-    const formValue = this.personForm.value;
-    
+    const { firstName, lastName, email } = this.personForm.value;
+
     if (this.data?.id) {
-      // Update existing person
-      const dto: UpdatePersonDto = {
-        firstName: formValue.firstName,
-        lastName: formValue.lastName,
-        email: formValue.email,
-        phone: formValue.phone || '',
-        address: formValue.address || ''
-      };
-      
+      // Actualizar
+      const dto: UpdatePersonDto = { firstName, lastName, email };
       this.personService.update(this.data.id, dto).subscribe({
         next: () => {
-          swal('Success!', 'Person updated successfully!', 'success');
+          Swal.fire('Actualizado', 'La persona se actualizó correctamente.', 'success');
           this.dialogRef.close(true);
         },
-        error: (err: any) => {
-          console.error('Error updating person:', err);
-          swal('Error!', 'Failed to update person', 'error');
+        error: (err) => {
+          console.error('Error al actualizar persona:', err);
+          Swal.fire('Error', 'No se pudo actualizar la persona.', 'error');
         }
       });
     } else {
-      // Create new person
-      const dto: CreatePersonDto = {
-        firstName: formValue.firstName,
-        lastName: formValue.lastName,
-        email: formValue.email,
-        phone: formValue.phone || '',
-        address: formValue.address || ''
-      };
-      
+      // Crear
+      const dto: CreatePersonDto = { firstName, lastName, email };
       this.personService.add(dto).subscribe({
         next: () => {
-          swal('Success!', 'Person created successfully!', 'success');
+          Swal.fire('Creado', 'La persona se creó correctamente.', 'success');
           this.dialogRef.close(true);
         },
-        error: (err: any) => {
-          console.error('Error creating person:', err);
-          swal('Error!', 'Failed to create person', 'error');
+        error: (err) => {
+          console.error('Error al crear persona:', err);
+          Swal.fire('Error', 'No se pudo crear la persona.', 'error');
         }
       });
     }
   }
-
 }
