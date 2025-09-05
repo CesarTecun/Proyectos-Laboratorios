@@ -92,8 +92,13 @@ namespace MessageApi.Services
             if (existingProduct == null)
                 return null;
 
-            // Update only the fields that are allowed to be updated
+            // Update all fields from the DTO
             existingProduct.Name = product.Name ?? throw new ArgumentNullException(nameof(product.Name));
+            existingProduct.Price = product.Price;
+            
+            // Handle potential null Description
+            existingProduct.Description = product.Description ?? string.Empty;
+            
             existingProduct.UpdatedAt = DateTime.UtcNow;
 
             var updated = await _repository.UpdateProductAsync(existingProduct);

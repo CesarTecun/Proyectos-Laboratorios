@@ -29,6 +29,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Configure HTTPS Redirection
+builder.Services.AddHttpsRedirection(options =>
+{
+    options.HttpsPort = 5001; // Default HTTPS port for ASP.NET Core
+});
+
 // EF Core + SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

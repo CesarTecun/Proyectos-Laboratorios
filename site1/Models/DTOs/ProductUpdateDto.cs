@@ -17,6 +17,19 @@ namespace MessageApi.Models.DTOs
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
+        /// Nuevo precio del producto.
+        /// </summary>
+        [Required(ErrorMessage = "El precio es obligatorio")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "El precio debe ser mayor a cero")]
+        public decimal Price { get; set; }
+
+        /// <summary>
+        /// Nueva descripción del producto.
+        /// </summary>
+        [StringLength(500, ErrorMessage = "La descripción no puede exceder los 500 caracteres")]
+        public string? Description { get; set; }
+
+        /// <summary>
         /// Nueva cantidad en inventario.
         /// </summary>
         [Required(ErrorMessage = "El stock es obligatorio")]
@@ -24,4 +37,3 @@ namespace MessageApi.Models.DTOs
         public int Stock { get; set; }
     }
 }
-
