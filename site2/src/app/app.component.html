@@ -1,195 +1,161 @@
-<!-- Main Navigation -->
-<nav class="bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg" role="navigation" aria-label="Navegación principal">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex justify-between h-20">
-      <!-- Logo and Main Menu -->
-      <div class="flex items-center">
-        <!-- Logo -->
-        <div class="flex-shrink-0 flex items-center">
-          <a routerLink="/" class="flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700 rounded-md p-1">
-            <span class="text-2xl font-extrabold text-white">
-              <span class="sr-only">OrderPro</span>
-              <span aria-hidden="true">Order<span class="text-blue-200">Pro</span></span>
+<!-- Barra de navegación principal -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
+  <div class="container-fluid">
+    <!-- Logo y botón de menú móvil -->
+    <div class="d-flex align-items-center">
+      <button class="navbar-toggler me-2" type="button" (click)="alternarMenu()" aria-label="Alternar navegación">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <a class="navbar-brand fw-bold" routerLink="/">
+        Order<span class="text-light">Pro</span>
+      </a>
+    </div>
+
+    <!-- Menú principal -->
+    <div class="collapse navbar-collapse" [class.show]="isMenuOpen">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" 
+             routerLink="/orders" 
+             routerLinkActive="active" 
+             (click)="navegarA('/orders', $event)">
+            <i class="bi bi-cart me-1"></i> Órdenes
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" 
+             routerLink="/products" 
+             routerLinkActive="active"
+             (click)="navegarA('/products', $event)">
+            <i class="bi bi-box-seam me-1"></i> Productos
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" 
+             routerLink="/customers" 
+             routerLinkActive="active"
+             (click)="navegarA('/customers', $event)">
+            <i class="bi bi-people me-1"></i> Clientes
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" 
+             routerLink="/person" 
+             routerLinkActive="active"
+             (click)="navegarA('/person', $event)">
+            <i class="bi bi-person-lines-fill me-1"></i> Personas
+          </a>
+        </li>
+      </ul>
+
+      <!-- Menú de usuario -->
+      <div class="d-flex align-items-center">
+        <!-- Notificaciones -->
+        <div class="dropdown me-3" *ngIf="notifications.length > 0">
+          <button class="btn btn-link text-white position-relative p-2" 
+                  type="button" 
+                  data-bs-toggle="dropdown" 
+                  aria-expanded="false">
+            <i class="bi bi-bell fs-5"></i>
+            <span *ngIf="unreadNotifications > 0" 
+                  class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+              {{ unreadNotifications }}
+              <span class="visually-hidden">notificaciones no leídas</span>
             </span>
-          </a>
-        </div>
-
-        <!-- Desktop Navigation (sin íconos) -->
-        <div class="hidden md:ml-10 md:flex md:space-x-1">
-          <a routerLink="/orders"
-             [routerLinkActive]="['bg-blue-700','text-white']"
-             class="px-3 py-2 rounded-md text-sm font-medium text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700"
-             role="menuitem">
-            Órdenes
-          </a>
-
-          <a routerLink="/products"
-             [routerLinkActive]="['bg-blue-700','text-white']"
-             class="px-3 py-2 rounded-md text-sm font-medium text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700"
-             role="menuitem">
-            Productos
-          </a>
-
-          <a routerLink="/customers"
-             [routerLinkActive]="['bg-blue-700','text-white']"
-             class="px-3 py-2 rounded-md text-sm font-medium text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700"
-             role="menuitem">
-            Clientes
-          </a>
-
-          <a routerLink="/person"
-             [routerLinkActive]="['bg-blue-700','text-white']"
-             class="px-3 py-2 rounded-md text-sm font-medium text-blue-100 hover:bg-blue-700 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-blue-700"
-             role="menuitem">
-            Personas
-          </a>
-        </div>
-      </div>
-
-      <!-- User Menu -->
-      <div class="hidden md:ml-4 md:flex-shrink-0 md:flex md:items-center">
-        <!-- Notifications (deshabilitado) -->
-        <div class="relative ml-4">
-          <button 
-            type="button"
-            (click)="$event.stopPropagation()"
-            (keydown.enter)="$event.stopPropagation()"
-            (keydown.space)="$event.stopPropagation()"
-            class="p-1 rounded-full text-blue-200 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-700 focus:ring-white relative"
-            title="Notificaciones (próximamente)"
-            disabled>
-            <span class="sr-only">Notificaciones</span>
-            <!-- Ícono removido -->
           </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow" style="min-width: 300px;">
+            <li *ngFor="let notif of notifications" 
+                [class.bg-light]="!notif.read"
+                (click)="$event.stopPropagation()">
+              <a class="dropdown-item d-flex justify-content-between align-items-center" 
+                 [routerLink]="['/notifications', notif.id]"
+                 (click)="navegarA('/notifications/' + notif.id, $event)">
+                <div>
+                  <div class="fw-bold">{{ notif.title }}</div>
+                  <div class="small text-muted">{{ notif.message }}</div>
+                  <div class="small text-muted">{{ notif.date | date:'short' }}</div>
+                </div>
+                <span *ngIf="!notif.read" class="badge bg-primary rounded-pill">Nuevo</span>
+              </a>
+            </li>
+          </ul>
         </div>
 
-        <!-- User profile dropdown -->
-        <div class="ml-4 relative flex-shrink-0">
-          <div>
-            <button 
-              type="button"
-              (click)="toggleProfileMenu()"
-              (keydown.enter)="toggleProfileMenu()"
-              (keydown.space)="toggleProfileMenu(); $event.preventDefault()"
-              class="flex items-center max-w-xs rounded-full bg-blue-700 text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-700 focus:ring-white" 
-              id="user-menu" 
-              aria-expanded="false" 
-              aria-haspopup="true"
-              [attr.aria-label]="'Perfil de ' + userInfo.name"
-            >
-              <span class="sr-only">Abrir menú de usuario</span>
-              <!-- Avatar -->
-              <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium text-lg" 
-                   [attr.aria-hidden]="true">
-                {{ userInfo.initials }}
-              </div>
-              <!-- Nombre (oculto en pantallas pequeñas) -->
-              <span class="hidden md:inline-block ml-3 text-left">
-                <div class="text-sm font-medium text-white">{{ userInfo.name }}</div>
-                <div class="text-xs font-light text-blue-100">{{ userInfo.email }}</div>
-              </span>
-              <!-- Flecha simple sin SVG -->
-              <span class="ml-2 text-blue-200 text-xs select-none" aria-hidden="true">▼</span>
-            </button>
-          </div>
-
-          <!-- Dropdown menu (sin íconos) -->
-          <div 
-            *ngIf="isProfileMenuOpen"
-            class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 z-50 focus:outline-none" 
-            role="menu" 
-            aria-orientation="vertical" 
-            aria-labelledby="user-menu"
-            tabindex="-1">
-            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">
-              Tu perfil
-            </a>
-            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">
-              Configuración
-            </a>
-            <a routerLink="/" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1">
-              Cerrar sesión
-            </a>
-          </div>
+        <!-- Perfil de usuario -->
+        <div class="dropdown">
+          <button class="btn btn-link text-white d-flex align-items-center text-decoration-none" 
+                  type="button" 
+                  (click)="alternarMenuPerfil()"
+                  aria-expanded="false">
+            <div class="bg-light text-dark rounded-circle d-flex align-items-center justify-content-center" 
+                 style="width: 36px; height: 36px;">
+              {{ userInfo.initials }}
+            </div>
+            <span class="ms-2 d-none d-md-inline">{{ userInfo.name }}</span>
+          </button>
+          
+          <!-- Menú desplegable del perfil -->
+          <ul class="dropdown-menu dropdown-menu-end shadow" [class.show]="isProfileMenuOpen">
+            <li>
+              <a class="dropdown-item" 
+                 routerLink="/profile"
+                 (click)="navegarA('/profile', $event)">
+                <i class="bi bi-person me-2"></i> Mi perfil
+              </a>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <a class="dropdown-item text-danger" 
+                 href="#" 
+                 (click)="$event.preventDefault(); cerrarSesion()"
+                 [class.disabled]="isLoading">
+                <i class="bi bi-box-arrow-right me-2"></i>
+                {{ isLoading ? 'Cerrando sesión...' : 'Cerrar sesión' }}
+              </a>
+            </li>
+          </ul>
         </div>
-      </div>
-
-      <!-- Botón móvil (conserva hamburguesa/X para accesibilidad) -->
-      <div class="-mr-2 flex items-center md:hidden">
-        <button type="button" 
-                (click)="toggleMenu()"
-                class="inline-flex items-center justify-center p-2 rounded-md text-blue-200 hover:text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-800 focus:ring-white" 
-                aria-controls="mobile-menu" 
-                [attr.aria-expanded]="isMenuOpen"
-                [attr.aria-label]="isMenuOpen ? 'Cerrar menú principal' : 'Abrir menú principal'">
-          <span class="sr-only">Abrir menú principal</span>
-          <!-- Icono de menú hamburguesa -->
-          <svg class="h-6 w-6" [class.hidden]="isMenuOpen" [class.block]="!isMenuOpen" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-          <!-- Icono de X (cerrar) -->
-          <svg class="h-6 w-6" [class.block]="isMenuOpen" [class.hidden]="!isMenuOpen" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Menú móvil (sin íconos en items) -->
-  <div class="md:hidden transition-all duration-300 ease-in-out" [class.hidden]="!isMenuOpen" id="mobile-menu">
-    <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-      <a routerLink="/orders" 
-         class="text-blue-100 hover:bg-blue-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-         (click)="navigateTo('/orders')">
-        Órdenes
-      </a>
-      <a routerLink="/products" 
-         class="text-blue-100 hover:bg-blue-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-         (click)="navigateTo('/products')">
-        Productos
-      </a>
-      <a routerLink="/customers" 
-         class="text-blue-100 hover:bg-blue-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-         (click)="navigateTo('/customers')">
-        Clientes
-      </a>
-      <a routerLink="/person" 
-         class="text-blue-100 hover:bg-blue-700 hover:text-white block px-3 py-2 rounded-md text-base font-medium"
-         (click)="navigateTo('/person')">
-        Personas
-      </a>
-    </div>
-
-    <!-- User menu in mobile -->
-    <div class="pt-4 pb-3 border-t border-blue-800">
-      <div class="flex items-center px-5">
-        <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-medium text-lg">
-          {{ userInfo.initials }}
-        </div>
-        <div class="ml-3">
-          <div class="text-base font-medium text-white">{{ userInfo.name }}</div>
-          <div class="text-sm font-medium text-blue-200">{{ userInfo.email }}</div>
-        </div>
-      </div>
-      <div class="mt-3 px-2 space-y-1">
-        <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:text-white hover:bg-blue-700">
-          Tu perfil
-        </a>
-        <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:text-white hover:bg-blue-700">
-          Configuración
-        </a>
-        <a routerLink="/" class="block px-3 py-2 rounded-md text-base font-medium text-blue-100 hover:text-white hover:bg-blue-700">
-          Cerrar sesión
-        </a>
       </div>
     </div>
   </div>
 </nav>
 
-<!-- Main content container -->
-<div class="min-h-screen bg-gray-50">
-  <div class="container mx-auto px-4 py-6 sm:px-6 lg:px-8 transition-all duration-300">
+<!-- Contenedor principal del contenido -->
+<main class="min-vh-100 bg-light">
+  <!-- Indicador de carga global -->
+  <div *ngIf="isLoading" class="position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center" 
+       style="background-color: rgba(0,0,0,0.1); z-index: 1100;">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Cargando...</span>
+    </div>
+  </div>
+
+  <!-- Contenido de la aplicación -->
+  <div class="container py-4">
     <router-outlet></router-outlet>
+  </div>
+
+  <!-- Mensajes de notificación global -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div #toastContainer class="toast-container"></div>
+  </div>
+</main>
+
+<!-- Modal de confirmación genérico -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Confirmación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <!-- El contenido se inyectará dinámicamente -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-primary" id="confirmButton">Aceptar</button>
+      </div>
+    </div>
   </div>
 </div>
