@@ -6,10 +6,10 @@ using System.Linq;
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using HelloApi.Data;
-using HelloApi.Models;
+using MessageApi.Data;
+using MessageApi.Models;
 
-namespace HelloApi.Repositories
+namespace MessageApi.Repositories
 {
     /// <summary>
     /// Implementación del repositorio para la entidad Order.
@@ -20,6 +20,7 @@ namespace HelloApi.Repositories
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private bool _disposed = false;
 
         /// <summary>
         /// Inicializa una nueva instancia del repositorio de órdenes.
@@ -35,8 +36,8 @@ namespace HelloApi.Repositories
         /// <summary>
         /// Crea y devuelve una nueva conexión a la base de datos.
         /// </summary>
-        /// <returns>Nueva instancia de IDbConnection configurada con la cadena de conexión</returns>
-        private IDbConnection CreateConnection()
+        /// <returns>Nueva instancia de SqlConnection configurada con la cadena de conexión</returns>
+        private SqlConnection CreateConnection()
         {
             var connectionString = _configuration.GetConnectionString("DefaultConnection") ?? 
                 throw new InvalidOperationException("No se encontró la cadena de conexión 'DefaultConnection'");
@@ -55,22 +56,27 @@ namespace HelloApi.Repositories
             if (order == null) throw new ArgumentNullException(nameof(order));
 
             order.CreatedAt = DateTime.UtcNow;
-            order.Number = await GetNextOrderNumberAsync();
+            order.UpdatedAt = DateTime.UtcNow;
             
+            if (order.Number == 0)
+            {
+                order.Number = await GetNextOrderNumberAsync();
+            }
+
             using var connection = CreateConnection();
             await connection.OpenAsync();
             
-            using var transaction = await connection.BeginTransactionAsync();
+            using var transaction = (SqlTransaction)await connection.BeginTransactionAsync();
             
             try
             {
-                // Insertar la orden
                 const string orderSql = @"
-                    INSERT INTO Orders (PersonId, Number, CreatedBy, CreatedAt, UpdatedBy, UpdatedAt)
-                    VALUES (@PersonId, @Number, @CreatedBy, @CreatedAt, @UpdatedBy, @UpdatedAt);
-                    SELECT CAST(SCOPE_IDENTITY() as int);";
+                    INSERT INTO Orders (Number, PersonId, Status, CreatedBy, CreatedAt, UpdatedBy, UpdatedAt)
+                    OUTPUT INSERTED.Id
+                    VALUES (@Number, @PersonId, @Status, @CreatedBy, @CreatedAt, @UpdatedBy, @UpdatedAt);";
 
-                var orderId = await connection.QuerySingleAsync<int>(orderSql, order, transaction: transaction);
+                // Ejecutar la inserción de la orden y obtener el ID generado
+                var orderId = await connection.ExecuteScalarAsync<int>(orderSql, order, transaction: transaction);
                 order.Id = orderId;
 
                 // Insertar los detalles de la orden
@@ -83,20 +89,18 @@ namespace HelloApi.Repositories
                     
                     const string detailSql = @"
                         INSERT INTO OrderDetails (OrderId, ItemId, Quantity, Price, Total, CreatedBy, CreatedAt, UpdatedBy, UpdatedAt)
-                        VALUES (@OrderId, @ItemId, @Quantity, @Price, @Total, @CreatedBy, @CreatedAt, @UpdatedBy, @UpdatedAt);
-                        SELECT CAST(SCOPE_IDENTITY() as int);";
+                        VALUES (@OrderId, @ItemId, @Quantity, @Price, @Total, @CreatedBy, @CreatedAt, @UpdatedBy, @UpdatedAt);";
 
-                    var detailId = await connection.ExecuteScalarAsync<int>(detailSql, detail, transaction: transaction);
-                    detail.Id = detailId;
+                    await connection.ExecuteAsync(detailSql, detail, transaction: transaction);
                 }
 
                 await transaction.CommitAsync();
                 return order;
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                throw;
+                throw new Exception("Error al crear la orden en la base de datos", ex);
             }
         }
 
@@ -109,6 +113,7 @@ namespace HelloApi.Repositories
         public async Task<Order?> GetByIdAsync(int id)
         {
             using var connection = CreateConnection();
+            await connection.OpenAsync();
             
             const string orderSql = @"
                 SELECT o.*, p.FirstName + ' ' + p.LastName as PersonName
@@ -122,15 +127,22 @@ namespace HelloApi.Repositories
                 INNER JOIN Items i ON od.ItemId = i.Id
                 WHERE od.OrderId = @OrderId;";
 
-            var order = await connection.QueryFirstOrDefaultAsync<Order>(orderSql, new { Id = id });
-            
-            if (order != null)
+            try
             {
-                var details = await connection.QueryAsync<OrderDetail>(detailsSql, new { OrderId = id });
-                order.OrderDetails = details.ToList();
-            }
+                var order = await connection.QueryFirstOrDefaultAsync<Order>(orderSql, new { Id = id });
+                
+                if (order != null)
+                {
+                    var details = await connection.QueryAsync<OrderDetail>(detailsSql, new { OrderId = id });
+                    order.OrderDetails = details.ToList();
+                }
 
-            return order;
+                return order;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener la orden de la base de datos", ex);
+            }
         }
 
         /// <summary>
@@ -141,6 +153,7 @@ namespace HelloApi.Repositories
         public async Task<IEnumerable<Order>> GetAllAsync()
         {
             using var connection = CreateConnection();
+            await connection.OpenAsync();
             
             const string orderSql = @"
                 SELECT o.*, p.FirstName + ' ' + p.LastName as PersonName
@@ -154,17 +167,27 @@ namespace HelloApi.Repositories
                 INNER JOIN Items i ON od.ItemId = i.Id
                 WHERE od.OrderId IN (SELECT Id FROM Orders);";
 
-            var orders = (await connection.QueryAsync<Order>(orderSql)).ToList();
-            var allDetails = await connection.QueryAsync<OrderDetail>(detailsSql);
-            
-            var detailsLookup = allDetails.ToLookup(d => d.OrderId);
-            
-            foreach (var order in orders)
+            try
             {
-                order.OrderDetails = detailsLookup[order.Id].ToList();
-            }
+                var orders = (await connection.QueryAsync<Order>(orderSql)).ToList();
+                
+                if (orders.Any())
+                {
+                    var allDetails = await connection.QueryAsync<OrderDetail>(detailsSql);
+                    var detailsLookup = allDetails.ToLookup(d => d.OrderId);
+                    
+                    foreach (var order in orders)
+                    {
+                        order.OrderDetails = detailsLookup[order.Id].ToList();
+                    }
+                }
 
-            return orders;
+                return orders;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener las órdenes de la base de datos", ex);
+            }
         }
 
         /// <summary>
@@ -181,23 +204,28 @@ namespace HelloApi.Repositories
             order.UpdatedAt = DateTime.UtcNow;
             
             using var connection = CreateConnection();
+            await connection.OpenAsync();
             
-            const string orderSql = @"
-                UPDATE Orders 
-                SET PersonId = @PersonId, 
-                    UpdatedBy = @UpdatedBy, 
-                    UpdatedAt = @UpdatedAt
-                WHERE Id = @Id";
-                
-            const string deleteDetailsSql = "DELETE FROM OrderDetails WHERE OrderId = @OrderId";
-
-            using var transaction = await connection.BeginTransactionAsync();
+            using var transaction = (SqlTransaction)await connection.BeginTransactionAsync();
             
             try
             {
+                const string orderSql = @"
+                    UPDATE Orders 
+                    SET PersonId = @PersonId, 
+                        UpdatedBy = @UpdatedBy, 
+                        UpdatedAt = @UpdatedAt
+                    WHERE Id = @Id";
+                    
+                const string deleteDetailsSql = "DELETE FROM OrderDetails WHERE OrderId = @OrderId";
+
                 // Actualizar la orden
                 var affectedRows = await connection.ExecuteAsync(orderSql, order, transaction: transaction);
-                if (affectedRows == 0) return false;
+                if (affectedRows == 0) 
+                {
+                    await transaction.RollbackAsync();
+                    return false;
+                }
 
                 // Eliminar detalles existentes
                 await connection.ExecuteAsync(deleteDetailsSql, new { OrderId = order.Id }, transaction: transaction);
@@ -219,10 +247,10 @@ namespace HelloApi.Repositories
                 await transaction.CommitAsync();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                throw;
+                throw new Exception("Error al actualizar la orden en la base de datos", ex);
             }
         }
 
@@ -235,8 +263,9 @@ namespace HelloApi.Repositories
         public async Task<bool> DeleteAsync(int id)
         {
             using var connection = CreateConnection();
+            await connection.OpenAsync();
             
-            using var transaction = await connection.BeginTransactionAsync();
+            using var transaction = (SqlTransaction)await connection.BeginTransactionAsync();
             
             try
             {
@@ -248,13 +277,19 @@ namespace HelloApi.Repositories
                 const string deleteOrderSql = "DELETE FROM Orders WHERE Id = @Id";
                 var affectedRows = await connection.ExecuteAsync(deleteOrderSql, new { Id = id }, transaction: transaction);
                 
-                await transaction.CommitAsync();
-                return affectedRows > 0;
+                if (affectedRows > 0)
+                {
+                    await transaction.CommitAsync();
+                    return true;
+                }
+                
+                await transaction.RollbackAsync();
+                return false;
             }
-            catch
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                throw;
+                throw new Exception("Error al eliminar la orden de la base de datos", ex);
             }
         }
 
@@ -267,13 +302,43 @@ namespace HelloApi.Repositories
         public async Task<int> GetNextOrderNumberAsync()
         {
             using var connection = CreateConnection();
+            await connection.OpenAsync();
             
             const string sql = @"
-                DECLARE @NextNumber INT;
-                SELECT @NextNumber = ISNULL(MAX(Number), 0) + 1 FROM Orders;
-                SELECT @NextNumber;";
+                SELECT ISNULL(MAX(Number), 0) + 1 
+                FROM Orders;";
                 
-            return await connection.ExecuteScalarAsync<int>(sql);
+            try
+            {
+                return await connection.ExecuteScalarAsync<int>(sql);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error al obtener el siguiente número de orden", ex);
+            }
         }
+
+        #region IDisposable Support
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _context.Dispose();
+                }
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
     }
 }
+

@@ -1,15 +1,16 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using HelloApi.Models;
-using HelloApi.Models.DTOs;
+using MessageApi.Models;
+using MessageApi.Models.DTOs;
 
-namespace HelloApi.Repositories
+namespace MessageApi.Repositories
 {
     /// <summary>
     /// Interfaz que define las operaciones del repositorio para la entidad Product.
     /// Proporciona métodos para gestionar productos en el sistema.
     /// </summary>
-    public interface IProductRepository
+    public interface IProductRepository : IDisposable
     {
         /// <summary>
         /// Agrega un nuevo producto al sistema de forma asíncrona.
@@ -46,3 +47,4 @@ namespace HelloApi.Repositories
         Task<bool> DeleteProductAsync(int id);
     }
 }
+

@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace HelloApi.Models
+namespace MessageApi.Models
 {
     /// <summary>
     /// Representa un artículo o producto en el sistema.
@@ -65,3 +65,4 @@ namespace HelloApi.Models
         public List<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     }
 }
+

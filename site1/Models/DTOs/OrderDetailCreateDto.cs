@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace HelloApi.Models.DTOs
+namespace MessageApi.Models.DTOs
 {
     /// <summary>
     /// DTO para la creación de un detalle de orden.
@@ -32,3 +32,5 @@ namespace HelloApi.Models.DTOs
         public decimal Price { get; set; }
     }
 }
+
+

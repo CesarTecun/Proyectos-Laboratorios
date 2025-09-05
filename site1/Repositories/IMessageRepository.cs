@@ -1,14 +1,14 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using HelloApi.Models;
+using MessageApi.Models;
 
-namespace HelloApi.Repositories
+namespace MessageApi.Repositories
 {
     /// <summary>
     /// Interfaz que define las operaciones del repositorio para la entidad Message.
     /// Proporciona métodos para gestionar mensajes en el sistema.
     /// </summary>
-    public interface IMessageRepository
+    public interface IMessageRepository : IDisposable
     {
         /// <summary>
         /// Agrega un nuevo mensaje al sistema de forma asíncrona.
@@ -45,3 +45,4 @@ namespace HelloApi.Repositories
         Task<bool> DeleteMessageAsync(int id);
     }
 }
+

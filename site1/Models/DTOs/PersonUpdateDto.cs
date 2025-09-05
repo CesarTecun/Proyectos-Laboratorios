@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace HelloApi.Models.DTOs
+namespace MessageApi.Models.DTOs
 {
     /// <summary>
     /// DTO para la actualización de una persona existente.
@@ -32,3 +32,4 @@ namespace HelloApi.Models.DTOs
         public string Email { get; set; } = string.Empty;
     }
 }
+

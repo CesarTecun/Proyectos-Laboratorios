@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using HelloApi.Models;
-using HelloApi.Models.DTOs;
-using HelloApi.Repositories;
+using MessageApi.Models;
+using MessageApi.Models.DTOs;
+using MessageApi.Repositories;
 
-namespace HelloApi.Services
+namespace MessageApi.Services
 {
     /// <summary>
     /// Implementación del servicio para la gestión de órdenes.
@@ -56,7 +56,7 @@ namespace HelloApi.Services
             if (orderDto.OrderDetails == null || !orderDto.OrderDetails.Any())
                 throw new ArgumentException("La orden debe contener al menos un detalle", nameof(orderDto.OrderDetails));
             // Verificar que la persona existe
-            var person = await _personRepository.GetByIdAsync(orderDto.PersonId);
+            var person = await _personRepository.GetPersonByIdAsync(orderDto.PersonId);
             if (person == null)
             {
                 throw new KeyNotFoundException("La persona especificada no existe.");
@@ -66,7 +66,7 @@ namespace HelloApi.Services
             var orderDetails = new List<OrderDetail>();
             foreach (var detailDto in orderDto.OrderDetails)
             {
-                var item = await _itemRepository.GetByIdAsync(detailDto.ItemId);
+                var item = await _itemRepository.GetItemByIdAsync(detailDto.ItemId);
                 if (item == null)
                 {
                     throw new KeyNotFoundException($"El ítem con ID {detailDto.ItemId} no existe.");
@@ -104,7 +104,7 @@ namespace HelloApi.Services
             // Mapear los detalles
             foreach (var detail in result.OrderDetails)
             {
-                var item = await _itemRepository.GetByIdAsync(detail.ItemId);
+                var item = await _itemRepository.GetItemByIdAsync(detail.ItemId);
                 detail.ItemName = item?.Name ?? "Producto no encontrado";
             }
 
@@ -127,7 +127,7 @@ namespace HelloApi.Services
             var result = _mapper.Map<OrderReadDto>(order);
             
             // Obtener el nombre de la persona
-            var person = await _personRepository.GetByIdAsync(order.PersonId);
+            var person = await _personRepository.GetPersonByIdAsync(order.PersonId);
             result.PersonName = person != null ? $"{person.FirstName} {person.LastName}" : "Cliente no encontrado";
             
             return result;
@@ -147,7 +147,7 @@ namespace HelloApi.Services
                 var orderDto = _mapper.Map<OrderReadDto>(order);
                 
                 // Obtener el nombre de la persona
-                var person = await _personRepository.GetByIdAsync(order.PersonId);
+                var person = await _personRepository.GetPersonByIdAsync(order.PersonId);
                 orderDto.PersonName = person != null ? $"{person.FirstName} {person.LastName}" : "Cliente no encontrado";
                 
                 result.Add(orderDto);
@@ -179,7 +179,7 @@ namespace HelloApi.Services
             }
 
             // Verificar que la persona existe
-            var person = await _personRepository.GetByIdAsync(orderDto.PersonId);
+            var person = await _personRepository.GetPersonByIdAsync(orderDto.PersonId);
             if (person == null)
             {
                 throw new KeyNotFoundException("La persona especificada no existe.");
@@ -189,7 +189,7 @@ namespace HelloApi.Services
             var orderDetails = new List<OrderDetail>();
             foreach (var detailDto in orderDto.OrderDetails)
             {
-                var item = await _itemRepository.GetByIdAsync(detailDto.ItemId);
+                var item = await _itemRepository.GetItemByIdAsync(detailDto.ItemId);
                 if (item == null)
                 {
                     throw new KeyNotFoundException($"El ítem con ID {detailDto.ItemId} no existe.");
@@ -267,3 +267,4 @@ namespace HelloApi.Services
         #endregion
     }
 }
+

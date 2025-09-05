@@ -1,4 +1,4 @@
-namespace HelloApi.Models.DTOs
+namespace MessageApi.Models.DTOs
 {
     /// <summary>
     /// DTO para la lectura de datos de una orden.
@@ -45,3 +45,5 @@ namespace HelloApi.Models.DTOs
         public decimal Total => OrderDetails.Sum(od => od.Total);
     }
 }
+
+

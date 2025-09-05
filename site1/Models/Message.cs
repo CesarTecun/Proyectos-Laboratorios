@@ -40,3 +40,4 @@ namespace MessageApi.Models
         public DateTime? UpdatedAt { get; set; }
     }
 }
+

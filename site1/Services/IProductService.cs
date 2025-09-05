@@ -1,14 +1,15 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using HelloApi.Models.DTOs;
+using MessageApi.Models.DTOs;
 
-namespace HelloApi.Services
+namespace MessageApi.Services
 {
     /// <summary>
     /// Interfaz que define las operaciones del servicio para la gestión de productos.
     /// Proporciona métodos para realizar operaciones CRUD en productos.
     /// </summary>
-    public interface IProductService
+    public interface IProductService : IDisposable
     {
         /// <summary>
         /// Crea un nuevo producto de forma asíncrona.
@@ -48,3 +49,4 @@ namespace HelloApi.Services
         Task<bool> DeleteProductAsync(int id);
     }
 }
+

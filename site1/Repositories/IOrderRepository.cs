@@ -1,14 +1,15 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using HelloApi.Models;
+using MessageApi.Models;
 
-namespace HelloApi.Repositories
+namespace MessageApi.Repositories
 {
     /// <summary>
     /// Interfaz que define las operaciones del repositorio para la entidad Order.
     /// Proporciona métodos para gestionar órdenes en la base de datos.
     /// </summary>
-    public interface IOrderRepository
+    public interface IOrderRepository : IDisposable
     {
         /// <summary>
         /// Crea una nueva orden en la base de datos de forma asíncrona.
@@ -51,3 +52,4 @@ namespace HelloApi.Repositories
         Task<int> GetNextOrderNumberAsync();
     }
 }
+

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using HelloApi.Models;
-using HelloApi.Models.DTOs;
-using HelloApi.Data;
+using MessageApi.Models;
+using MessageApi.Models.DTOs;
+using MessageApi.Data;
 
-namespace HelloApi.Repositories
+namespace MessageApi.Repositories
 {
     /// <summary>
     /// Implementación del repositorio para la entidad Product.
@@ -16,6 +16,7 @@ namespace HelloApi.Repositories
     public class ProductRepository : IProductRepository
     {
         private readonly AppDbContext _context;
+        private bool _disposed = false;
 
         /// <summary>
         /// Inicializa una nueva instancia del repositorio de productos.
@@ -99,6 +100,28 @@ namespace HelloApi.Repositories
             return existing;
         }
 
+        #region IDisposable Support
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    _context.Dispose();
+                }
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
+
         /// <summary>
         /// Elimina un producto por su ID de forma asíncrona.
         /// </summary>
@@ -118,3 +141,4 @@ namespace HelloApi.Repositories
         }
     }
 }
+

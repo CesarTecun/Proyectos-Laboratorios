@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using HelloApi.Models;
-using HelloApi.Models.DTOs;
-using HelloApi.Repositories;
+using MessageApi.Models;
+using MessageApi.Models.DTOs;
+using MessageApi.Repositories;
 
-namespace HelloApi.Services
+namespace MessageApi.Services
 {
     /// <summary>
     /// Implementación del servicio para la gestión de personas.
@@ -155,3 +155,4 @@ namespace HelloApi.Services
         #endregion
     }
 }
+

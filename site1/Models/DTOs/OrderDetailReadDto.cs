@@ -1,4 +1,4 @@
-namespace HelloApi.Models.DTOs
+namespace MessageApi.Models.DTOs
 {
     /// <summary>
     /// DTO para la lectura de datos de un detalle de orden.
@@ -40,3 +40,5 @@ namespace HelloApi.Models.DTOs
         public decimal Total => Quantity * Price;
     }
 }
+
+

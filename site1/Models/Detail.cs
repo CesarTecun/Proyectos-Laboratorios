@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace HelloApi.Models
+namespace MessageApi.Models
 {
     /// <summary>
     /// Representa un detalle de factura en el sistema.
@@ -93,3 +93,4 @@ namespace HelloApi.Models
         public Product? Product { get; set; }
     }
 }
+

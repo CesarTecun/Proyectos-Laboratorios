@@ -8,8 +8,9 @@ namespace MessageApi.Repositories;
 /// Implementación del repositorio para la entidad Message.
 /// Maneja las operaciones de base de datos para los mensajes del sistema.
 /// </summary>
-public class MessageRepository : IMessageRepository
+public class MessageRepository : IMessageRepository, IDisposable
 {
+    private bool _disposed = false;
     private readonly AppDbContext _context;
 
     /// <summary>
@@ -95,4 +96,27 @@ public class MessageRepository : IMessageRepository
         await _context.SaveChangesAsync();
         return true;
     }
+
+    #region IDisposable Support
+    
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _context.Dispose();
+            }
+            _disposed = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    #endregion
 }
+

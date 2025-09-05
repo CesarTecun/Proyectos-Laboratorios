@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace HelloApi.Models
+namespace MessageApi.Models
 {
     /// <summary>
     /// Representa un detalle de pedido en el sistema.
@@ -96,3 +96,4 @@ namespace HelloApi.Models
         public DateTime? UpdatedAt { get; set; }
     }
 }
+

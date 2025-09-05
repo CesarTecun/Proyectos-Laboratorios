@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using HelloApi.Models.DTOs;
+using MessageApi.Models.DTOs;
 
-namespace HelloApi.Services
+namespace MessageApi.Services
 {
     /// <summary>
     /// Interfaz que define las operaciones del servicio para la gestión de mensajes.
@@ -46,3 +46,4 @@ namespace HelloApi.Services
         Task<bool> DeleteMessageAsync(int id);
     }
 }
+

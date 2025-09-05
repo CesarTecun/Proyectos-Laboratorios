@@ -1,15 +1,16 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using HelloApi.Models;
-using HelloApi.Models.DTOs;
+using MessageApi.Models;
+using MessageApi.Models.DTOs;
 
-namespace HelloApi.Repositories
+namespace MessageApi.Repositories
 {
     /// <summary>
     /// Interfaz que define las operaciones del repositorio para la entidad Person.
     /// Proporciona métodos para gestionar personas en el sistema.
     /// </summary>
-    public interface IPersonRepository
+    public interface IPersonRepository : IDisposable
     {
         /// <summary>
         /// Agrega una nueva persona al sistema de forma asíncrona.
@@ -46,3 +47,4 @@ namespace HelloApi.Repositories
         Task<bool> DeletePersonAsync(int id);
     }
 }
+

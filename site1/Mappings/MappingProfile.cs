@@ -1,8 +1,8 @@
 using AutoMapper;
-using HelloApi.Models;
-using HelloApi.Models.DTOs;
+using MessageApi.Models;
+using MessageApi.Models.DTOs;
 
-namespace HelloApi.Mappings
+namespace MessageApi.Mappings
 {
     /// <summary>
     /// Perfil de AutoMapper para configurar los mapeos entre entidades y DTOs.

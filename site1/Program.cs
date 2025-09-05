@@ -1,9 +1,9 @@
 using System.Text.Json.Serialization;
 using AutoMapper;
-using HelloApi.Data;
-using HelloApi.Mappings;
-using HelloApi.Repositories;
-using HelloApi.Services;
+using MessageApi.Data;
+using MessageApi.Mappings;
+using MessageApi.Repositories;
+using MessageApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -24,6 +24,8 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 // Repositorios
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IItemRepository, ItemRepository>();
+builder.Services.AddScoped<IPersonRepository, PersonRepository>();
 
 // Servicios
 builder.Services.AddScoped<IMessageService, MessageService>();
@@ -93,14 +95,9 @@ app.UseRouting();
 app.UseCors("CorsPolicy");
 app.UseAuthorization();
 
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllers();
-    
-    // Ruta de bienvenida
-    endpoints.MapGet("/", async context =>
-    {
-        await context.Response.WriteAsync("Order Management API is running!");
-    });
-});
+// Mapeo de controladores y rutas
+app.MapControllers();
+
+// Ruta de bienvenida
+app.MapGet("/", () => "Order Management API is running!");
 app.Run();

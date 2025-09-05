@@ -1,4 +1,4 @@
-namespace HelloApi.Models.DTOs
+namespace MessageApi.Models.DTOs
 {
     /// <summary>
     /// DTO para la lectura de datos de un mensaje.
@@ -29,3 +29,5 @@ namespace HelloApi.Models.DTOs
         public DateTime? UpdatedAt { get; set; }
     }
 }
+
+

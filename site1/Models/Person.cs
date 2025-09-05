@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace HelloApi.Models
+namespace MessageApi.Models
 {
     /// <summary>
     /// Representa una persona en el sistema.
@@ -66,3 +66,4 @@ namespace HelloApi.Models
         public List<Order> Orders { get; set; } = new List<Order>();
     }
 }
+

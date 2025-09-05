@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AutoMapper;
-using HelloApi.Models.DTOs;
-using HelloApi.Services;
+using MessageApi.Models.DTOs;
+using MessageApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -114,7 +114,7 @@ namespace HelloApi.Controllers
                 
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("Datos de orden no válidos", ModelState);
+                    _logger.LogWarning("Datos de orden no válidos. Errores: {ModelState}", ModelState);
                     return BadRequest(ModelState);
                 }
 
@@ -169,7 +169,7 @@ namespace HelloApi.Controllers
                 
                 if (!ModelState.IsValid)
                 {
-                    _logger.LogWarning("Datos de orden no válidos para actualización", ModelState);
+                    _logger.LogWarning("Datos de orden no válidos para actualización. Errores: {ModelState}", ModelState);
                     return BadRequest(ModelState);
                 }
 
@@ -242,3 +242,4 @@ namespace HelloApi.Controllers
         }
     }
 }
+

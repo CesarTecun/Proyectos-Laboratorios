@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace HelloApi.Models.DTOs
+namespace MessageApi.Models.DTOs
 {
     /// <summary>
     /// DTO para la creación de una nueva orden.
@@ -30,3 +30,5 @@ namespace HelloApi.Models.DTOs
         public List<OrderDetailCreateDto> OrderDetails { get; set; } = new();
     }
 }
+
+

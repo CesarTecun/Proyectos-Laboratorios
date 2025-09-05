@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace HelloApi.Models.DTOs
+namespace MessageApi.Models.DTOs
 {
     /// <summary>
     /// DTO para la creación de un nuevo mensaje.
@@ -17,3 +17,4 @@ namespace HelloApi.Models.DTOs
         public string Message { get; set; } = string.Empty;
     }
 }
+

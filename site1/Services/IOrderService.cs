@@ -1,14 +1,15 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using HelloApi.Models.DTOs;
+using MessageApi.Models.DTOs;
 
-namespace HelloApi.Services
+namespace MessageApi.Services
 {
     /// <summary>
     /// Interfaz que define las operaciones del servicio para la gestión de órdenes.
     /// Proporciona métodos para realizar operaciones CRUD en órdenes.
     /// </summary>
-    public interface IOrderService
+    public interface IOrderService : IDisposable
     {
         /// <summary>
         /// Crea una nueva orden de forma asíncrona.
@@ -48,3 +49,4 @@ namespace HelloApi.Services
         Task<bool> DeleteOrderAsync(int id);
     }
 }
+
