@@ -1,0 +1,95 @@
+/* Contenedor principal */
+.container {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+/* Tarjeta del formulario */
+.product-form-card {
+  width: 100%;
+  max-width: 600px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+/* Título del formulario */
+mat-card-title {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  color: #3f51b5;
+}
+
+/* Campos del formulario */
+mat-form-field {
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+/* Iconos dentro de los campos */
+mat-icon[matSuffix] {
+  color: rgba(0, 0, 0, 0.54);
+  margin-left: 8px;
+}
+
+/* Botones de acción */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* Estilos para los botones */
+button[mat-button],
+button[mat-raised-button] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Estilos específicos para el botón de guardar */
+button[mat-raised-button][color='primary'] {
+  background-color: #3f51b5;
+  color: white;
+}
+
+/* Estilos para el botón de cancelar */
+button[mat-button] {
+  color: #3f51b5;
+}
+
+/* Estilos para el spinner de carga */
+mat-spinner {
+  display: inline-block;
+  margin-right: 8px;
+}
+
+/* Mensajes de error */
+mat-error {
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* Estilos responsivos */
+@media (max-width: 600px) {
+  .product-form-card {
+    padding: 1rem;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  button[mat-button],
+  button[mat-raised-button] {
+    width: 100%;
+    justify-content: center;
+  }
+}

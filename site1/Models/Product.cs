@@ -5,16 +5,16 @@ namespace MessageApi.Models
 {
     /// <summary>
     /// Representa un producto en el sistema.
-    /// Esta entidad almacena la información de los productos disponibles para la venta.
+    /// Esta entidad almacena la información de los productos disponibles.
     /// </summary>
-    [Table("Products")]  // Especifica el nombre de la tabla en la base de datos
+    [Table("Products")]
     public class Product
     {
         /// <summary>
         /// Identificador único del producto.
         /// </summary>
-        [Key]  // Indica que es la clave primaria
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]  // Generación automática del ID
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
         /// <summary>
@@ -23,26 +23,6 @@ namespace MessageApi.Models
         [Required(ErrorMessage = "El nombre del producto es obligatorio")]
         [StringLength(100, ErrorMessage = "El nombre no puede exceder los 100 caracteres")]
         public string Name { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Descripción detallada del producto.
-        /// </summary>
-        [StringLength(500, ErrorMessage = "La descripción no puede exceder los 500 caracteres")]
-        public string? Description { get; set; }
-
-        /// <summary>
-        /// Precio del producto.
-        /// </summary>
-        [Required(ErrorMessage = "El precio es obligatorio")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "El precio debe ser mayor a cero")]
-        public decimal Price { get; set; }
-
-        /// <summary>
-        /// Cantidad en inventario.
-        /// </summary>
-        [Required(ErrorMessage = "El stock es obligatorio")]
-        [Range(0, int.MaxValue, ErrorMessage = "El stock no puede ser negativo")]
-        public int Stock { get; set; }
 
         /// <summary>
         /// Fecha y hora en que se creó el registro del producto.

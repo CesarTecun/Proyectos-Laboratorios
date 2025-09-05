@@ -87,17 +87,16 @@ namespace MessageApi.Services
             if (id <= 0)
                 throw new ArgumentOutOfRangeException(nameof(id), "El ID debe ser mayor que cero");
 
-            var entity = new Product
-            {
-                Id = id,
-                Name = product.Name ?? throw new ArgumentNullException(nameof(product.Name)),
-                Description = product.Description,
-                Price = product.Price,
-                Stock = product.Stock,
-                UpdatedAt = DateTime.UtcNow
-            };
+            // Get existing product to preserve created date
+            var existingProduct = await _repository.GetProductByIdAsync(id);
+            if (existingProduct == null)
+                return null;
 
-            var updated = await _repository.UpdateProductAsync(entity);
+            // Update only the fields that are allowed to be updated
+            existingProduct.Name = product.Name ?? throw new ArgumentNullException(nameof(product.Name));
+            existingProduct.UpdatedAt = DateTime.UtcNow;
+
+            var updated = await _repository.UpdateProductAsync(existingProduct);
             return updated == null ? null : _mapper.Map<ProductReadDto>(updated);
         }
 

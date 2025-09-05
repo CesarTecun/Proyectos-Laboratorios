@@ -1,0 +1,72 @@
+<div class="container">
+  <mat-card class="product-form-card">
+    <mat-card-header>
+      <mat-card-title>
+        {{ isEditMode ? 'Editar Producto' : 'Nuevo Producto' }}
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
+        <!-- Nombre del Producto -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nombre del Producto</mat-label>
+          <input 
+            matInput 
+            placeholder="Ingrese el nombre del producto" 
+            formControlName="name"
+            required>
+          <mat-icon matSuffix>inventory_2</mat-icon>
+          <mat-hint>Máximo 100 caracteres</mat-hint>
+          <mat-error *ngIf="name?.hasError('required')">
+            El nombre es obligatorio
+          </mat-error>
+          <mat-error *ngIf="name?.hasError('maxlength')">
+            El nombre no puede exceder los 100 caracteres
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Precio -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Precio</mat-label>
+          <input 
+            matInput 
+            type="number" 
+            min="0.01" 
+            step="0.01" 
+            placeholder="0.00" 
+            formControlName="price"
+            required>
+          <span matTextPrefix>$&nbsp;</span>
+          <mat-icon matSuffix>attach_money</mat-icon>
+          <mat-error *ngIf="price?.hasError('required')">
+            El precio es obligatorio
+          </mat-error>
+          <mat-error *ngIf="price?.hasError('min')">
+            El precio debe ser mayor a 0
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Botones de Acción -->
+        <div class="form-actions">
+          <button 
+            mat-button 
+            type="button" 
+            (click)="onCancel()"
+            [disabled]="isLoading">
+            <mat-icon>cancel</mat-icon> Cancelar
+          </button>
+          <button 
+            mat-raised-button 
+            color="primary" 
+            type="submit"
+            [disabled]="productForm.invalid || isLoading">
+            <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+            <mat-spinner *ngIf="isLoading" diameter="24"></mat-spinner>
+            {{ isEditMode ? 'Guardar Cambios' : 'Crear Producto' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

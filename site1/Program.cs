@@ -4,6 +4,7 @@ using MessageApi.Data;
 using MessageApi.Mappings;
 using MessageApi.Repositories;
 using MessageApi.Services;
+using MessageApi.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -37,12 +38,14 @@ builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IPersonRepository, PersonRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
 // Servicios
 builder.Services.AddScoped<IItemService, ItemService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPersonService, PersonService>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 // AutoMapper
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -50,6 +53,7 @@ builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // Configuración de controladores
 builder.Services.AddControllers()
+    .AddApplicationPart(typeof(ProductController).Assembly)
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
@@ -76,9 +80,6 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Habilitar CORS
-app.UseCors(MyAllowSpecificOrigins);
-
 // Configuración de la canalización de solicitudes HTTP
 if (app.Environment.IsDevelopment())
 {
@@ -92,8 +93,15 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Configuración del pipeline de solicitudes HTTP
 app.UseRouting();
-app.UseCors("CorsPolicy");
+
+// Habilitar CORS
+app.UseCors(MyAllowSpecificOrigins);
+
+// Autenticación y autorización si es necesario
+// app.UseAuthentication();
 app.UseAuthorization();
 
 // Mapeo de controladores y rutas

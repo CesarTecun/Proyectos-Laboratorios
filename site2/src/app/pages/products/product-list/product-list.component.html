@@ -1,33 +1,73 @@
-<div class="container mx-auto p-4">
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold">Lista de Productos</h1>
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Lista de Productos</h2>
+    <button mat-raised-button color="primary" [routerLink]="['/products/new']">
+      <mat-icon>add</mat-icon> Nuevo Producto
+    </button>
   </div>
-  
-  <div class="bg-white shadow-md rounded-lg overflow-hidden">
-    <table class="min-w-full">
-      <thead class="bg-gray-100">
-        <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
-        <tr *ngFor="let item of items" class="hover:bg-gray-50">
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ item.id }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ item.name }}</td>
-          <td class="px-6 py-4 text-sm text-gray-500">{{ item.description || 'Sin descripción' }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${{ item.price | number:'1.2-2' }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.stock }}</td>
-        </tr>
-        <tr *ngIf="items.length === 0">
-          <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">
-            No hay productos registrados
-          </td>
-        </tr>
-      </tbody>
+
+  <div *ngIf="isLoading" class="text-center my-4">
+    <mat-spinner diameter="40"></mat-spinner>
+    <p class="mt-2">Cargando productos...</p>
+  </div>
+
+  <div *ngIf="!isLoading && error" class="alert alert-danger" role="alert">
+    {{ error }}
+  </div>
+
+  <div *ngIf="!isLoading && !error" class="table-responsive">
+    <table mat-table [dataSource]="dataSource" matSort class="mat-elevation-z8 w-100">
+      <!-- Columna ID -->
+      <ng-container matColumnDef="id">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
+        <td mat-cell *matCellDef="let product">{{ product.id }}</td>
+      </ng-container>
+
+      <!-- Columna Nombre -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Nombre</th>
+        <td mat-cell *matCellDef="let product">{{ product.name }}</td>
+      </ng-container>
+
+      <!-- Columna Precio -->
+      <ng-container matColumnDef="price">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Precio</th>
+        <td mat-cell *matCellDef="let product">{{ product.price | currency }}</td>
+      </ng-container>
+
+      <!-- Columna Fecha de Creación -->
+      <ng-container matColumnDef="createdAt">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Creado</th>
+        <td mat-cell *matCellDef="let product">
+          {{ product.createdAt | date:'short' }}
+        </td>
+      </ng-container>
+
+      <!-- Columna Fecha de Actualización -->
+      <ng-container matColumnDef="updatedAt">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Actualizado</th>
+        <td mat-cell *matCellDef="let product">
+          {{ product.updatedAt ? (product.updatedAt | date:'short') : 'Nunca' }}
+        </td>
+      </ng-container>
+
+      <!-- Columna Acciones -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef class="text-end">Acciones</th>
+        <td mat-cell *matCellDef="let product" class="text-end">
+          <button mat-icon-button color="primary" [routerLink]="['/products/edit', product.id]" matTooltip="Editar">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button color="warn" (click)="onDelete(product.id)" matTooltip="Eliminar">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
     </table>
+
+    <mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
   </div>
 </div>
