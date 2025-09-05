@@ -18,6 +18,9 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Register services
+builder.Services.AddScoped<IItemService, ItemService>();
+
 // AutoMapper
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
@@ -45,34 +48,15 @@ builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Order Management API", Version = "v1" });
 });
 
-// CORS Configuration
-var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? [];
-if (allowedOrigins.Length == 0)
-{
-    // Si no hay orígenes configurados, permitir cualquier origen en desarrollo
-    if (builder.Environment.IsDevelopment())
-    {
-        allowedOrigins = ["*"];
-    }
-}
-
+// CORS Configuration - Permitir solicitudes desde el frontend
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CorsPolicy", builder =>
+    options.AddPolicy("CorsPolicy", policy =>
     {
-        if (allowedOrigins.Contains("*"))
-        {
-            builder.AllowAnyOrigin()
-                   .AllowAnyHeader()
-                   .AllowAnyMethod();
-        }
-        else
-        {
-            builder.WithOrigins(allowedOrigins)
-                   .AllowAnyHeader()
-                   .AllowAnyMethod()
-                   .AllowCredentials();
-        }
+        policy.WithOrigins("http://localhost:4200") // URL del frontend Angular
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 

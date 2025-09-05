@@ -1,0 +1,10 @@
+mat-card-title {
+  color: green;
+}
+
+mat-card {
+  text-align: justify;
+  border: 1px solid black;
+  width: 355px;
+  padding: 5px;
+}
