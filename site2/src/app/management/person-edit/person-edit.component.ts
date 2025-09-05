@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { PersonService } from '../../services/person.service';
-import { Person } from '../../models/person';
+import { Person, CreatePersonDto, UpdatePersonDto } from '../../models/person';
 import { MatDialogRef, MAT_DIALOG_DATA, MatDialogActions, MatDialogContent } from '@angular/material/dialog';
 import swal from 'sweetalert';
 
@@ -30,11 +30,13 @@ export class PersonEditComponent {
   private dialogRef = inject(MatDialogRef<PersonEditComponent>);
   private fb = inject(FormBuilder);
   personForm: FormGroup;
+  
   constructor(@Inject(MAT_DIALOG_DATA) public data: Person) {
     this.personForm = this.fb.group({
-      firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]]
+      name: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      phone: ['', Validators.required],
+      address: ['', Validators.required]
     });
   }
 
@@ -43,22 +45,51 @@ export class PersonEditComponent {
   }
 
   onSubmit() {
-    const val = this.personForm.value as Person;
-    swal({
-      title: "Are you sure?",
-      text: "Once deleted, you will not be able to recover this imaginary file!",
-      icon: "warning",
-      dangerMode: true,
-    })
-      .then((willDelete) => {
-        if (willDelete) {
-          if (this.data?.id) {
-            this.personService.update(this.data.id, val).subscribe(() => this.dialogRef.close(true));
-          } else {
-            this.personService.add(val).subscribe(() => this.dialogRef.close(true));
-          }
+    if (this.personForm.invalid) {
+      return;
+    }
+
+    const formValue = this.personForm.value;
+    
+    if (this.data?.id) {
+      // Update existing person
+      const dto: UpdatePersonDto = {
+        name: formValue.name,
+        email: formValue.email,
+        phone: formValue.phone,
+        address: formValue.address
+      };
+      
+      this.personService.update(this.data.id, dto).subscribe({
+        next: () => {
+          swal('Success!', 'Person updated successfully!', 'success');
+          this.dialogRef.close(true);
+        },
+        error: (err: any) => {
+          console.error('Error updating person:', err);
+          swal('Error!', 'Failed to update person', 'error');
         }
       });
+    } else {
+      // Create new person
+      const dto: CreatePersonDto = {
+        name: formValue.name,
+        email: formValue.email,
+        phone: formValue.phone,
+        address: formValue.address
+      };
+      
+      this.personService.add(dto).subscribe({
+        next: () => {
+          swal('Success!', 'Person created successfully!', 'success');
+          this.dialogRef.close(true);
+        },
+        error: (err: any) => {
+          console.error('Error creating person:', err);
+          swal('Error!', 'Failed to create person', 'error');
+        }
+      });
+    }
   }
 
 }

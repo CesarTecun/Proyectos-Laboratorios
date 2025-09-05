@@ -2,14 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-
-export interface Person {
-  id: number;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-}
+import { Person, CreatePersonDto, UpdatePersonDto } from '../models/person';
 
 @Injectable({
   providedIn: 'root'
@@ -19,23 +12,43 @@ export class PersonService {
 
   constructor(private http: HttpClient) {}
 
-  getPersons(): Observable<Person[]> {
+  getAll(): Observable<Person[]> {
     return this.http.get<Person[]>(this.apiUrl);
+  }
+
+  // Alias for backward compatibility
+  getPersons(): Observable<Person[]> {
+    return this.getAll();
   }
 
   getPerson(id: number): Observable<Person> {
     return this.http.get<Person>(`${this.apiUrl}/${id}`);
   }
 
-  createPerson(person: Omit<Person, 'id'>): Observable<Person> {
-    return this.http.post<Person>(this.apiUrl, person);
+  add(dto: CreatePersonDto): Observable<Person> {
+    return this.http.post<Person>(this.apiUrl, dto);
   }
 
-  updatePerson(id: number, person: Partial<Person>): Observable<Person> {
-    return this.http.put<Person>(`${this.apiUrl}/${id}`, person);
+  // Alias for backward compatibility
+  createPerson(dto: CreatePersonDto): Observable<Person> {
+    return this.add(dto);
   }
 
-  deletePerson(id: number): Observable<void> {
+  update(id: number, dto: UpdatePersonDto): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}`, dto);
+  }
+
+  // Alias for backward compatibility
+  updatePerson(id: number, dto: UpdatePersonDto): Observable<Person> {
+    return this.http.put<Person>(`${this.apiUrl}/${id}`, dto);
+  }
+
+  delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  // Alias for backward compatibility
+  deletePerson(id: number): Observable<void> {
+    return this.delete(id);
   }
 }

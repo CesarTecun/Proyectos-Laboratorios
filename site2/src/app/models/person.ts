@@ -1,8 +1,10 @@
-export class Person {
-
-    id?: number;
-    firstName: string;
-    lastName: string;
+export interface Person {
+    id: number;
+    name: string;
     email: string;
-
+    phone: string;
+    address: string;
 }
+
+export type CreatePersonDto = Omit<Person, 'id'>;
+export type UpdatePersonDto = Partial<CreatePersonDto>;

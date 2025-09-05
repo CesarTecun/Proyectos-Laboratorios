@@ -1,11 +1,26 @@
-import { Component, OnInit, HostListener, ViewChild, ElementRef, Inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, HostListener, ViewChild, ElementRef, OnInit, Inject, PLATFORM_ID, DestroyRef } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of, fromEvent } from 'rxjs';
+import { filter, map, takeUntil } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 // Importar servicios y modelos a través del barrel file
-import { MessageService, AuthService } from './services';
+import { MessageService } from './services';
+
+interface UserInfo {
+  name: string;
+  email: string;
+  initials: string;
+}
+
+interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  read: boolean;
+  date: Date;
+}
 
 @Component({
   selector: 'app-root',
@@ -20,175 +35,126 @@ import { MessageService, AuthService } from './services';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
-  title = 'OrderPro - Sistema de Gestión';
+  // Menu states
+  isMenuOpen = false;
+  isProfileMenuOpen = false;
   
-  // Estado del menú
-  isUserMenuOpen = false;
-  isMobileMenuOpen = false;
-  isNotificationsOpen = false;
+  // User info
+  userInfo: UserInfo = {
+    name: 'Admin User',
+    email: 'admin@example.com',
+    initials: 'AU'
+  };
   
-  // Datos del usuario
-  userName$: BehaviorSubject<string> = new BehaviorSubject<string>('Usuario');
-  userEmail$: BehaviorSubject<string> = new BehaviorSubject<string>('usuario@ejemplo.com');
-  userInitials$: Observable<string>;
+  // Notifications
+  notifications: Notification[] = [];
+  unreadNotifications = 0;
   
-  // Notificaciones
-  unreadNotifications = 3; // Ejemplo: reemplazar con datos reales
-  
-  // Estado de carga
+  // Loading state
   isLoading = false;
   
-  // Referencias a elementos del DOM
-  @ViewChild('profileMenu') profileMenu!: ElementRef<HTMLElement>;
+  // Screen size tracking
+  isMobileView = false;
+  private isBrowser: boolean;
 
   constructor(
     private router: Router,
-    @Inject(AuthService) private authService: AuthService,
-    private messageService: MessageService
-  ) {
-    // Cerrar menús al navegar (para móviles)
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      this.closeAllMenus();
-      window.scrollTo(0, 0);
-    });
-    
-    // Iniciales del usuario para el avatar
-    this.userInitials$ = this.userName$.pipe(
-      map(name => {
-        if (!name) return 'U';
-        const parts = name.split(' ');
-        if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-        return `${parts[0].charAt(0)}${parts[parts.length - 1].charAt(0)}`.toUpperCase();
-      })
-    );
+    private messageService: MessageService,
+    @Inject(PLATFORM_ID) platformId: Object,
+    private destroyRef: DestroyRef
+  ) { 
+    this.isBrowser = isPlatformBrowser(platformId);
+    if (this.isBrowser) {
+      this.checkScreenSize();
+    }
   }
 
   ngOnInit(): void {
-    this.loadUserData();
-    this.checkNotifications();
-  }
-  
-  private loadUserData(): void {
-    // Cargar datos del usuario autenticado
-    const user = this.authService.getCurrentUser();
-    if (user) {
-      this.userName$.next(user.name || 'Usuario');
-      this.userEmail$.next(user.email || 'usuario@ejemplo.com');
-    } else {
-      // Si no hay usuario, redirigir al login
-      this.router.navigate(['/login']);
+    // Load notifications
+    this.loadNotifications();
+
+    // Setup resize observer only in browser
+    if (this.isBrowser) {
+      fromEvent(window, 'resize')
+        .pipe(
+          takeUntilDestroyed(this.destroyRef)
+        )
+        .subscribe(() => this.checkScreenSize());
     }
   }
-  
-  private checkNotifications(): void {
-    // Aquí iría la lógica para verificar notificaciones
-    // Ejemplo:
-    // this.notificationService.getUnreadCount().subscribe(count => {
-    //   this.unreadNotifications = count;
-    // });
-  }
-  
-  // Manejo de menús
-  toggleMobileMenu(event?: Event): void {
-    event?.preventDefault();
-    this.isMobileMenuOpen = !this.isMobileMenuOpen;
+
+  // Load notifications
+  private loadNotifications(): void {
+    // Mock notifications since we removed the auth service
+    const mockNotifications: Notification[] = [
+      { id: 1, title: 'Bienvenido', message: 'Bienvenido a OrderPro', read: true, date: new Date() },
+      { id: 2, title: 'Actualización', message: 'Nueva versión disponible', read: false, date: new Date() }
+    ];
     
-    // Cerrar otros menús si es necesario
-    if (this.isMobileMenuOpen) {
-      this.isUserMenuOpen = false;
-      this.isNotificationsOpen = false;
-    }
-    
-    // Bloquear el scroll cuando el menú móvil está abierto
-    document.body.style.overflow = this.isMobileMenuOpen ? 'hidden' : '';
+    this.notifications = mockNotifications;
+    this.unreadNotifications = mockNotifications.filter(n => !n.read).length;
   }
-  
-  toggleUserMenu(event?: Event): void {
-    event?.stopPropagation();
-    this.isUserMenuOpen = !this.isUserMenuOpen;
-    if (this.isUserMenuOpen) {
-      this.isNotificationsOpen = false;
-    } 
-    this.isMobileMenuOpen = false;
-  }
-  
-  toggleNotifications(event: Event): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.isNotificationsOpen = !this.isNotificationsOpen;
-    
-    if (this.isNotificationsOpen) {
-      this.isUserMenuOpen = false;
-      this.isMobileMenuOpen = false;
-      // Aquí podrías marcar notificaciones como leídas
-      // this.notificationService.markAsRead();
-      this.unreadNotifications = 0;
+
+  // Toggle mobile menu
+  toggleMenu(): void {
+    this.isMenuOpen = !this.isMenuOpen;
+    if (this.isMenuOpen) {
+      this.isProfileMenuOpen = false;
     }
   }
-  
+
+  // Toggle profile menu
+  toggleProfileMenu(): void {
+    this.isProfileMenuOpen = !this.isProfileMenuOpen;
+    if (this.isProfileMenuOpen) {
+      this.isMenuOpen = false;
+    }
+  }
+
+  // Close all menus
   closeAllMenus(): void {
-    this.isMobileMenuOpen = false;
-    this.isUserMenuOpen = false;
-    this.isNotificationsOpen = false;
-    document.body.style.overflow = '';
+    this.isMenuOpen = false;
+    this.isProfileMenuOpen = false;
   }
-  
-  closeMobileMenu(): void {
-    this.isMobileMenuOpen = false;
-    document.body.style.overflow = '';
-  }
-  
-  // Cerrar menús al hacer clic fuera
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    // Close menus if clicked outside
-    if (!this.profileMenu?.nativeElement) return;
-    
-    const target = event.target as Node;
-    const profileMenuElement = this.profileMenu.nativeElement;
-    const isClickInside = profileMenuElement.contains(target);
-    
-    if (!isClickInside) {
-      this.closeAllMenus();
-    }
-  }
-  
-  @HostListener('window:resize', ['$event'])
-  onResize(event: Event): void {
-    // Cerrar menú móvil si la pantalla es grande
-    if (window.innerWidth >= 768) {
-      this.closeAllMenus();
-    }
-  }
-  
-  @HostListener('window:keydown.escape')
-  onEscapeKey(): void {
-    this.closeAllMenus();
-  }
-  
-  // Navegación
+
+  // Navigation
   navigateTo(route: string, event?: Event): void {
     event?.preventDefault();
     this.router.navigate([route]);
     this.closeAllMenus();
   }
-  
-  // Autenticación
+
+  // Handle window resize
+  @HostListener('window:resize', ['$event'])
+  onResize(event: Event): void {
+    if (this.isBrowser) {
+      this.checkScreenSize();
+      if (!this.isMobileView) {
+        this.closeAllMenus();
+      }
+    }
+  }
+
+  // Check screen size and update mobile view flag
+  private checkScreenSize(): void {
+    if (this.isBrowser) {
+      this.isMobileView = window.innerWidth < 768;
+    }
+  }
+
+  // Handle escape key
+  @HostListener('window:keydown.escape')
+  onEscapeKey(): void {
+    this.closeAllMenus();
+  }
+
+  // Simple logout that just navigates to home
   logout(): void {
     this.isLoading = true;
-    this.authService.logout().subscribe({
-      next: () => {
-        this.router.navigate(['/login']);
-        this.isLoading = false;
-      },
-      error: (error: any) => {
-        console.error('Error al cerrar sesión:', error);
-        // Mostrar mensaje de error genérico si el servicio de mensajes no está disponible
-        alert('Error al cerrar sesión. Intente nuevamente.');
-        this.isLoading = false;
-      }
-    });
+    // Simulate API call
+    setTimeout(() => {
+      this.router.navigate(['/']);
+      this.isLoading = false;
+    }, 500);
   }
 }

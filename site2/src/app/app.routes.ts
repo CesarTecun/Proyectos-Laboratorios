@@ -45,5 +45,16 @@ export const routes: Routes = [
       }
     ]
   },
+  { 
+    path: 'person',
+    children: [
+      { path: '', redirectTo: 'list', pathMatch: 'full' },
+      { 
+        path: 'list', 
+        loadComponent: () => import('./pages/person/person.component')
+          .then(m => m.PersonComponent) 
+      }
+    ]
+  },
   { path: '**', redirectTo: 'orders' }
 ];
