@@ -1,0 +1,9 @@
+{
+  "name": "OrderPro",
+  "short_name": "OrderPro",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a4db3",
+  "theme_color": "#0a4db3",
+  "icons": []
+}

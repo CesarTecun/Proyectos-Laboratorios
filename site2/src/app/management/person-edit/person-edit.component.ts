@@ -33,15 +33,26 @@ export class PersonEditComponent {
   
   constructor(@Inject(MAT_DIALOG_DATA) public data: Person) {
     this.personForm = this.fb.group({
-      name: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      phone: ['', Validators.required],
-      address: ['', Validators.required]
+      firstName: ['', [Validators.required, Validators.maxLength(50)]],
+      lastName: ['', [Validators.required, Validators.maxLength(50)]],
+      email: ['', [Validators.required, Validators.email, Validators.maxLength(100)]],
+      phone: [''],
+      address: ['']
     });
   }
 
   ngOnInit() {
-    if (this.data) this.personForm.patchValue(this.data);
+    if (this.data) {
+      // Split the name into first and last name if it exists
+      const personData = { ...this.data };
+      if (personData.firstName === undefined && 'name' in personData) {
+        // Handle case where we might have the old name field
+        const nameParts = (personData as any).name?.split(' ') || ['', ''];
+        personData.firstName = nameParts[0];
+        personData.lastName = nameParts.slice(1).join(' ');
+      }
+      this.personForm.patchValue(personData);
+    }
   }
 
   onSubmit() {
@@ -54,10 +65,11 @@ export class PersonEditComponent {
     if (this.data?.id) {
       // Update existing person
       const dto: UpdatePersonDto = {
-        name: formValue.name,
+        firstName: formValue.firstName,
+        lastName: formValue.lastName,
         email: formValue.email,
-        phone: formValue.phone,
-        address: formValue.address
+        phone: formValue.phone || '',
+        address: formValue.address || ''
       };
       
       this.personService.update(this.data.id, dto).subscribe({
@@ -73,10 +85,11 @@ export class PersonEditComponent {
     } else {
       // Create new person
       const dto: CreatePersonDto = {
-        name: formValue.name,
+        firstName: formValue.firstName,
+        lastName: formValue.lastName,
         email: formValue.email,
-        phone: formValue.phone,
-        address: formValue.address
+        phone: formValue.phone || '',
+        address: formValue.address || ''
       };
       
       this.personService.add(dto).subscribe({

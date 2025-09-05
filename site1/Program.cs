@@ -10,6 +10,20 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configuración de CORS
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy =>
+                      {
+                          policy.WithOrigins("http://localhost:4200") // URL de tu aplicación Angular
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -18,12 +32,6 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Register services
-builder.Services.AddScoped<IItemService, ItemService>();
-
-// AutoMapper
-builder.Services.AddAutoMapper(typeof(MappingProfile));
-
 // Repositorios
 builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
@@ -31,8 +39,14 @@ builder.Services.AddScoped<IItemRepository, ItemRepository>();
 builder.Services.AddScoped<IPersonRepository, PersonRepository>();
 
 // Servicios
+builder.Services.AddScoped<IItemService, ItemService>();
 builder.Services.AddScoped<IMessageService, MessageService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IPersonService, PersonService>();
+
+// AutoMapper
+builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // Configuración de controladores
 builder.Services.AddControllers()
@@ -62,6 +76,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Habilitar CORS
+app.UseCors(MyAllowSpecificOrigins);
+
 // Configuración de la canalización de solicitudes HTTP
 if (app.Environment.IsDevelopment())
 {
@@ -84,4 +101,27 @@ app.MapControllers();
 
 // Ruta de bienvenida
 app.MapGet("/", () => "Order Management API is running!");
+
+// Middleware de manejo de errores personalizado
+app.UseExceptionHandler(appError =>
+{
+    appError.Run(async context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+
+        var contextFeature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+        if (contextFeature != null)
+        {
+            await context.Response.WriteAsJsonAsync(new 
+            {
+                StatusCode = context.Response.StatusCode,
+                Message = "Error interno del servidor",
+                Detail = contextFeature.Error.Message,
+                StackTrace = app.Environment.IsDevelopment() ? contextFeature.Error.StackTrace : null
+            });
+        }
+    });
+});
+
 app.Run();

@@ -16,6 +16,13 @@ namespace MessageApi.Mappings
         /// </summary>
         public MappingProfile()
         {
+            // Mapeo de Message a MessageReadDto
+            CreateMap<Message, MessageReadDto>()
+                .ForMember(dest => dest.Message, opt => opt.MapFrom(src => src.MessageText));
+                
+            // Mapeo de Person a PersonReadDto
+            CreateMap<Person, PersonReadDto>();
+                
             // Mapeo de Order a OrderReadDto
             CreateMap<Order, OrderReadDto>()
                 // Se ignora PersonName porque se establecerá manualmente después del mapeo

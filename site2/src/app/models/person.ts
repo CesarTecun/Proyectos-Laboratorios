@@ -1,10 +1,20 @@
 export interface Person {
     id: number;
-    name: string;
+    firstName: string;
+    lastName: string;
     email: string;
-    phone: string;
-    address: string;
+    phone?: string;
+    address?: string;
+    createdAt?: string;
+    updatedAt?: string | null;
 }
 
-export type CreatePersonDto = Omit<Person, 'id'>;
-export type UpdatePersonDto = Partial<CreatePersonDto>;
+export interface CreatePersonDto {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    address?: string;
+}
+
+export interface UpdatePersonDto extends Partial<CreatePersonDto> {}

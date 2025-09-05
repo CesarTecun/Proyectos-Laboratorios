@@ -37,13 +37,14 @@ namespace MessageApi.Repositories
         {
             if (person == null) throw new ArgumentNullException(nameof(person));
 
+            var now = DateTime.UtcNow;
             var entity = new Person
             {
                 FirstName = person.FirstName ?? throw new ArgumentNullException(nameof(person.FirstName)),
                 LastName = person.LastName ?? throw new ArgumentNullException(nameof(person.LastName)),
-                Email = person.Email,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = null
+                Email = person.Email ?? throw new ArgumentNullException(nameof(person.Email)),
+                CreatedAt = now,
+                UpdatedAt = now
             };
             
             _context.Persons.Add(entity);
@@ -59,6 +60,7 @@ namespace MessageApi.Repositories
         public async Task<IEnumerable<Person>> GetAllPersonsAsync()
         {
             return await _context.Persons
+                .AsNoTracking()
                 .OrderBy(p => p.Id)
                 .ToListAsync();
         }
@@ -90,7 +92,7 @@ namespace MessageApi.Repositories
             
             existing.FirstName = person.FirstName ?? throw new ArgumentNullException(nameof(person.FirstName));
             existing.LastName = person.LastName ?? throw new ArgumentNullException(nameof(person.LastName));
-            existing.Email = person.Email;
+            existing.Email = person.Email ?? throw new ArgumentNullException(nameof(person.Email));
             existing.UpdatedAt = DateTime.UtcNow;
             
             await _context.SaveChangesAsync();

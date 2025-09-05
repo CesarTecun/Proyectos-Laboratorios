@@ -37,12 +37,19 @@ namespace MessageApi.Services
         /// <param name="person">DTO con los datos de la persona a crear</param>
         /// <returns>DTO con los datos de la persona creada</returns>
         /// <exception cref="ArgumentNullException">Se lanza si el DTO de la persona es nulo</exception>
-        public async Task<PersonReadDto> CreatePersonAsync(PersonCreateDto person)
+        /// <summary>
+        /// Crea una nueva persona de forma asíncrona.
+        /// Establece automáticamente las fechas de creación y actualización.
+        /// </summary>
+        /// <param name="personDto">DTO con los datos de la persona a crear</param>
+        /// <returns>DTO con los datos de la persona creada</returns>
+        /// <exception cref="ArgumentNullException">Se lanza si el DTO de la persona es nulo</exception>
+        public async Task<PersonReadDto> CreatePersonAsync(PersonCreateDto personDto)
         {
-            if (person == null)
-                throw new ArgumentNullException(nameof(person));
+            if (personDto == null)
+                throw new ArgumentNullException(nameof(personDto));
 
-            var entity = await _repository.AddPersonAsync(person);
+            var entity = await _repository.AddPersonAsync(personDto);
             return _mapper.Map<PersonReadDto>(entity);
         }
 
@@ -73,31 +80,37 @@ namespace MessageApi.Services
 
         /// <summary>
         /// Actualiza una persona existente de forma asíncrona.
+        /// Actualiza automáticamente la fecha de actualización.
         /// </summary>
-        /// <param name="id">Identificador único de la persona a actualizar</param>
-        /// <param name="person">DTO con los datos actualizados de la persona</param>
+        /// <param name="id">ID de la persona a actualizar</param>
+        /// <param name="personDto">DTO con los datos actualizados</param>
         /// <returns>DTO con los datos actualizados de la persona o null si no se encuentra</returns>
-        /// <exception cref="ArgumentNullException">Se lanza si el DTO de la persona es nulo</exception>
-        /// <exception cref="ArgumentOutOfRangeException">Se lanza si el ID es menor o igual a cero</exception>
-        public async Task<PersonReadDto?> UpdatePersonAsync(int id, PersonUpdateDto person)
+        /// <exception cref="ArgumentNullException">Se lanza si el DTO es nulo</exception>
+        public async Task<PersonReadDto?> UpdatePersonAsync(int id, PersonUpdateDto personDto)
         {
-            if (person == null)
-                throw new ArgumentNullException(nameof(person));
-                
-            if (id <= 0)
-                throw new ArgumentOutOfRangeException(nameof(id), "El ID debe ser mayor que cero");
+            if (personDto == null)
+                throw new ArgumentNullException(nameof(personDto));
 
-            var entity = new Person
+            var existingPerson = await _repository.GetPersonByIdAsync(id);
+            if (existingPerson == null)
             {
-                Id = id,
-                FirstName = person.FirstName ?? throw new ArgumentNullException(nameof(person.FirstName)),
-                LastName = person.LastName ?? throw new ArgumentNullException(nameof(person.LastName)),
-                Email = person.Email,
-                UpdatedAt = DateTime.UtcNow
-            };
+                return null;
+            }
 
-            var updated = await _repository.UpdatePersonAsync(entity);
-            return updated == null ? null : _mapper.Map<PersonReadDto>(updated);
+            // Mapear solo las propiedades que vienen en el DTO
+            if (personDto.FirstName != null)
+                existingPerson.FirstName = personDto.FirstName;
+                
+            if (personDto.LastName != null)
+                existingPerson.LastName = personDto.LastName;
+                
+            if (personDto.Email != null)
+                existingPerson.Email = personDto.Email;
+                
+            existingPerson.UpdatedAt = DateTime.UtcNow;
+
+            var updatedPerson = await _repository.UpdatePersonAsync(existingPerson);
+            return _mapper.Map<PersonReadDto>(updatedPerson);
         }
 
         /// <summary>
@@ -113,16 +126,6 @@ namespace MessageApi.Services
                 
             return await _repository.DeletePersonAsync(id);
         }
-
-        private static PersonReadDto MapToReadDto(Person Person) => new()
-        {
-            Id = Person.Id,
-            FirstName = Person.FirstName,
-            LastName = Person.LastName,
-            Email = Person.Email,
-            CreatedAt = Person.CreatedAt,
-            UpdatedAt = Person.UpdatedAt
-        };
 
         #region IDisposable Implementation
         

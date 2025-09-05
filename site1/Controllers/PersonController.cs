@@ -14,7 +14,7 @@ namespace MessageApi.Controllers
     /// Proporciona endpoints para crear, leer, actualizar y eliminar personas.
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/[controller]")]  // Usando el singular para consistencia
     public class PersonController : ControllerBase
     {
         private readonly IPersonService _personService;

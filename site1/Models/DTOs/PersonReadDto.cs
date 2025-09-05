@@ -29,8 +29,9 @@ namespace MessageApi.Models.DTOs
 
         /// <summary>
         /// Fecha y hora en que se creó el registro de la persona.
+        /// Es nulo si la fecha no se ha establecido.
         /// </summary>
-        public DateTime CreatedAt { get; set; }
+        public DateTime? CreatedAt { get; set; }
 
         /// <summary>
         /// Fecha y hora de la última actualización del registro de la persona.

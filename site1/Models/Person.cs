@@ -47,17 +47,15 @@ namespace MessageApi.Models
         /// Fecha y hora en que se creó el registro de la persona.
         /// Se establece automáticamente al crear el registro.
         /// </summary>
-        [Required]
-        [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-        [Column("CreatedAt")]  // Especifica el nombre de la columna en la base de datos
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        [Column("CreatedAt", TypeName = "datetime2")]
+        public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// Fecha y hora de la última actualización del registro de la persona.
-        /// Es nulo si el registro nunca ha sido actualizado.
+        /// Se actualiza automáticamente al modificar el registro.
         /// </summary>
-        [Column("UpdatedAt")]  // Especifica el nombre de la columna en la base de datos
-        public DateTime? UpdatedAt { get; set; }
+        [Column("UpdatedAt", TypeName = "datetime2")]
+        public DateTime? UpdatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// Colección de pedidos realizados por esta persona.

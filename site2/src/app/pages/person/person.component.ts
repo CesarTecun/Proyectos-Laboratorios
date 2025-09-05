@@ -41,30 +41,55 @@ export class PersonComponent {
   private personService = inject(PersonService);
   private dialog = inject(MatDialog);
 
-  displayedColumns = ['id', 'name', 'email', 'phone', 'address', 'action'];
+  // Ajustar las columnas para que coincidan con los datos de la API
+  displayedColumns = ['id', 'firstName', 'lastName', 'email', 'createdAt', 'action'];
   dataSource = new MatTableDataSource<Person>([]);
   
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
   ngOnInit() {
+    // Initialize data source with empty array
+    this.dataSource = new MatTableDataSource<Person>([]);
+    
+    // Set up paginator and sort after the view is initialized
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
+    
+    // Load data
     this.loadPersons();
   }
 
   ngAfterViewInit() {
-    this.loadPersons();
+    // Ensure the paginator and sort are connected after view init
+    if (this.dataSource) {
+      this.dataSource.paginator = this.paginator;
+      this.dataSource.sort = this.sort;
+    }
   }
 
   loadPersons() {
+    console.log('Cargando personas...');
     this.personService.getAll().subscribe({
-      next: (res) => {
-        this.dataSource.data = res;
-        this.dataSource.paginator = this.paginator;
-        this.dataSource.sort = this.sort;
+      next: (res: any) => {
+        console.log('Datos recibidos:', res);
+        
+        // Asegurarse de que res sea un array antes de mapear
+        const persons = Array.isArray(res) ? res : [];
+        
+        console.log('Personas procesadas:', persons);
+        
+        // Actualizar los datos de la tabla
+        this.dataSource.data = persons;
+        
+        // Forzar la actualización del paginador y ordenamiento
+        if (this.dataSource.paginator) {
+          this.dataSource.paginator.firstPage();
+        }
       },
       error: (err: any) => {
-        console.error('Error loading persons:', err);
-        Swal.fire('Error!', 'Failed to load persons', 'error');
+        console.error('Error al cargar personas:', err);
+        Swal.fire('¡Error!', 'No se pudieron cargar las personas', 'error');
       }
     });
   }
