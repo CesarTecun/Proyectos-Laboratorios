@@ -1,157 +1,137 @@
 /**
- * Componente para mostrar una lista de productos con funcionalidad CRUD.
- * 
- * Este componente implementa:
- * - Visualización de productos en una tabla con paginación y ordenamiento
- * - Eliminación de productos con diálogo de confirmación
- * - Navegación a edición/creación de productos
- * 
- * - Utiliza Angular Material para la interfaz de usuario
- * - Implementa carga perezosa de datos
- * - Manejo de errores con notificaciones
+ * Lista de productos con el mismo diseño/UX que PersonComponent:
+ * - Búsqueda por nombre/descripcion
+ * - Orden por id/name/price/createdAt/updatedAt
+ * - Paginación en cliente con signals
+ * - Estados de carga, error, vacío y skeleton
  */
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { MatTableModule } from '@angular/material/table';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatSort, MatSortModule } from '@angular/material/sort';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Product } from '../../../models/product';
 import { ProductService } from '../../../services/product.service';
 import { ConfirmDialogComponent } from '../../../shared/confirm-dialog/confirm-dialog.component';
 
+type SortKey = 'id' | 'name' | 'price' | 'createdAt' | 'updatedAt';
+type SortDir = 'asc' | 'desc';
+
 @Component({
-  /**
-   * Selector del componente.
-   * Se usa con <app-product-list></app-product-list> en las plantillas.
-   */
   selector: 'app-product-list',
-  /**
-   * standalone: true indica que este componente es independiente y no necesita ser declarado en un módulo.
-   * imports: Importa los módulos necesarios para el funcionamiento del componente.
-   */
   standalone: true,
   imports: [
-    CommonModule, 
+    CommonModule,
     RouterModule,
-    MatTableModule,
+    FormsModule,              // para ngModel en toolbar/paginación
     MatButtonModule,
     MatIconModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
     MatDialogModule,
-    MatSortModule,
-    MatPaginatorModule,
+    MatSnackBarModule,
     DatePipe
   ],
   templateUrl: './product-list.component.html',
   styles: [`
-    .mat-mdc-table {
-      width: 100%;
-    }
-    
-    .mat-mdc-header-cell {
-      font-weight: bold;
-    }
-    
-    .mat-mdc-row:hover {
-      background-color: #f5f5f5;
-      cursor: pointer;
-    }
-    
-    .mat-mdc-cell, .mat-mdc-header-cell {
-      padding: 0 16px;
-    }
-    
-    .actions-cell {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-    }
+    .text-truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   `]
 })
 export class ProductListComponent implements OnInit {
-  // Columnas a mostrar en la tabla
-  displayedColumns: string[] = ['id', 'name', 'price', 'description', 'createdAt', 'updatedAt', 'actions'];
-  
-  // Fuente de datos para la tabla
-  dataSource: Product[] = [];
-  
-  // Estado de carga
-  isLoading = true;
-  
-  // Mensaje de error, si lo hay
-  error = '';
+  // Estado base
+  products = signal<Product[]>([]);
+  isLoading = signal<boolean>(true);
+  error = signal<string>('');
 
-  // Referencias a los componentes de Material para ordenamiento y paginación
-  @ViewChild(MatSort) sort!: MatSort;
-  @ViewChild(MatPaginator) paginator!: MatPaginator;
+  // Estado de UI
+  query = signal<string>('');
+  sortKey = signal<SortKey>('id');
+  sortDir = signal<SortDir>('asc');
+  page = signal<number>(1);
+  pageSize = signal<number>(10);
 
-  /**
-   * Constructor del componente.
-   * 
-   * @param productService Servicio para interactuar con la API de productos
-   * @param dialog Servicio para abrir diálogos modales
-   * @param snackBar Servicio para mostrar notificaciones
-   */
+  // Derivados
+  paged = computed(() => {
+    let list = [...this.products()];
+
+    // Filtro
+    const q = this.query().trim().toLowerCase();
+    if (q) {
+      list = list.filter(p =>
+        (p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q))
+      );
+    }
+
+    // Orden
+    const key = this.sortKey();
+    const dir = this.sortDir() === 'asc' ? 1 : -1;
+    list.sort((a: any, b: any) => {
+      const av = a[key] ?? '';
+      const bv = b[key] ?? '';
+      if (av < bv) return -1 * dir;
+      if (av > bv) return  1 * dir;
+      return 0;
+    });
+
+    // Paginación
+    const start = (this.page() - 1) * this.pageSize();
+    return list.slice(start, start + this.pageSize());
+  });
+
+  totalItems = computed(() => {
+    const q = this.query().trim().toLowerCase();
+    if (!q) return this.products().length;
+    return this.products().filter(p =>
+      (p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q))
+    ).length;
+  });
+
+  totalPages = computed(() => Math.max(1, Math.ceil(this.totalItems() / this.pageSize())));
+  endItem = computed(() => Math.min(this.page() * this.pageSize(), this.totalItems()));
+
   constructor(
     private productService: ProductService,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
   ) {}
 
-  /**
-   * Método del ciclo de vida de Angular que se ejecuta al inicializar el componente.
-   * Carga la lista de productos al iniciar.
-   */
   ngOnInit(): void {
     this.loadProducts();
   }
 
-  /**
-   * Carga los productos desde el servidor.
-   * Actualiza el estado de carga y maneja los errores.
-   */
+  /** Carga desde API */
   loadProducts(): void {
-    this.isLoading = true;
+    this.isLoading.set(true);
+    this.error.set('');
     this.productService.getAll().subscribe({
       next: (products) => {
-        console.log('Productos recibidos de la API:', JSON.stringify(products, null, 2));
-        console.log('Primer producto:', products[0] ? {
-          id: products[0].id,
-          name: products[0].name,
-          price: products[0].price,
-          description: products[0].description,
-          createdAt: products[0].createdAt,
-          updatedAt: products[0].updatedAt
-        } : 'No hay productos');
-        this.dataSource = products;
-        this.isLoading = false;
+        this.products.set(Array.isArray(products) ? products : []);
+        this.isLoading.set(false);
       },
       error: (err) => {
         console.error('Error al cargar productos:', err);
-        this.error = 'Error al cargar la lista de productos';
-        this.snackBar.open(this.error, 'Cerrar', { duration: 5000 });
-        this.isLoading = false;
+        this.error.set('Error al cargar la lista de productos');
+        this.isLoading.set(false);
+        this.snackBar.open(this.error(), 'Cerrar', { duration: 5000 });
       }
     });
   }
 
-  /**
-   * Maneja la acción de eliminar un producto.
-   * Muestra un diálogo de confirmación antes de proceder con la eliminación.
-   * 
-   * @param id ID del producto a eliminar
-   */
+  /** Helpers UI */
+  applyFilter() { this.goToPage(1); }
+  setDir(dir: SortDir) { this.sortDir.set(dir); this.goToPage(1); }
+  setPageSize(size: number) { this.pageSize.set(size); this.goToPage(1); }
+  goToPage(n: number) { this.page.set(Math.max(1, Math.min(n, this.totalPages()))); }
+  nextPage() { if (this.page() < this.totalPages()) this.page.update(p => p + 1); }
+  prevPage() { if (this.page() > 1) this.page.update(p => p - 1); }
+  reload() { this.loadProducts(); }
+
+  /** Eliminar con confirmación */
   onDelete(id: number): void {
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+    const ref = this.dialog.open(ConfirmDialogComponent, {
       width: '350px',
-      data: { 
+      data: {
         title: 'Eliminar Producto',
         message: '¿Está seguro de que desea eliminar este producto?',
         confirmText: 'Eliminar',
@@ -159,23 +139,22 @@ export class ProductListComponent implements OnInit {
       }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.productService.delete(id).subscribe({
-          next: (success) => {
-            if (success) {
-              this.snackBar.open('Producto eliminado correctamente', 'Cerrar', { duration: 3000 });
-              this.loadProducts();
-            } else {
-              this.snackBar.open('Error al eliminar el producto', 'Cerrar', { duration: 5000 });
-            }
-          },
-          error: (err) => {
-            console.error('Error al eliminar el producto:', err);
+    ref.afterClosed().subscribe(ok => {
+      if (!ok) return;
+      this.productService.delete(id).subscribe({
+        next: (success) => {
+          if (success) {
+            this.snackBar.open('Producto eliminado correctamente', 'Cerrar', { duration: 3000 });
+            this.loadProducts();
+          } else {
             this.snackBar.open('Error al eliminar el producto', 'Cerrar', { duration: 5000 });
           }
-        });
-      }
+        },
+        error: (err) => {
+          console.error('Error al eliminar el producto:', err);
+          this.snackBar.open('Error al eliminar el producto', 'Cerrar', { duration: 5000 });
+        }
+      });
     });
   }
 }
