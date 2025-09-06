@@ -285,16 +285,6 @@ export class OrderListComponent implements OnInit {
     this.loadOrders();
   }
 
-  setSortKey(key: string): void {
-    if (this.sortKey === key) {
-      this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
-    } else {
-      this.sortKey = key;
-      this.sortDir = 'asc';
-    }
-    this.applyFilters();
-  }
-
   updateOrderStatus(orderId: number, status: string): void {
     if (!orderId) return;
 
