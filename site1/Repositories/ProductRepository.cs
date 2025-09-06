@@ -40,6 +40,8 @@ namespace MessageApi.Repositories
             var entity = new Product
             {
                 Name = product.Name ?? throw new ArgumentNullException(nameof(product.Name)),
+                Price = product.Price,
+                Description = product.Description ?? string.Empty,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = null
             };
@@ -88,6 +90,8 @@ namespace MessageApi.Repositories
             if (existing == null) return null;
             
             existing.Name = product.Name ?? throw new ArgumentNullException(nameof(product.Name));
+            existing.Price = product.Price;
+            existing.Description = product.Description ?? string.Empty;
             existing.UpdatedAt = DateTime.UtcNow;
             
             await _context.SaveChangesAsync();

@@ -87,7 +87,7 @@ namespace MessageApi.Controllers
 
                 var product = await _productService.CreateProductAsync(productCreateDto);
                 var productReadDto = _mapper.Map<ProductReadDto>(product);
-                return CreatedAtRoute(nameof(GetById), new { id = productReadDto.Id }, productReadDto);
+                return CreatedAtAction(nameof(GetById), new { id = productReadDto.Id }, productReadDto);
             }
             catch (Exception ex)
             {

@@ -63,7 +63,14 @@ export class ProductService {
    * Crea un nuevo producto
    */
   create(product: CreateProductDto): Observable<Product | null> {
-    return this.http.post<Product>(this.apiUrl, product, { headers: this.jsonHeaders }).pipe(
+    const payload: CreateProductDto = {
+      ...product,
+      // asegurar tipos correctos
+      price: Number((product as any).price),
+      description: (product as any).description ?? ''
+    } as CreateProductDto;
+
+    return this.http.post<Product>(this.apiUrl, payload, { headers: this.jsonHeaders }).pipe(
       catchError(error => {
         console.error('Error al crear el producto:', error);
         return of(null);
@@ -75,7 +82,13 @@ export class ProductService {
    * Actualiza un producto existente
    */
   update(id: number, product: UpdateProductDto): Observable<boolean> {
-    return this.http.put(`${this.apiUrl}/${id}`, product, { 
+    const payload: UpdateProductDto = {
+      ...product,
+      price: Number((product as any).price),
+      description: (product as any).description ?? ''
+    } as UpdateProductDto;
+
+    return this.http.put(`${this.apiUrl}/${id}`, payload, { 
       headers: this.jsonHeaders,
       observe: 'response' 
     }).pipe(
