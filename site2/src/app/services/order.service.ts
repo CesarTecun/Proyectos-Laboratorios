@@ -38,6 +38,37 @@ export interface OrderReadDto {
   createdAt: string;
   updatedAt?: string;
   totalAmount: number;
+  personId?: number;
+}
+
+// Backend-aligned DTOs
+export interface BackendOrderDetailCreateDto {
+  itemId: number;
+  quantity: number;
+}
+
+export interface BackendOrderCreateDto {
+  personId: number;
+  createdBy: number;
+  orderDetails: BackendOrderDetailCreateDto[];
+}
+
+export interface BackendOrderDetailReadDto {
+  id: number;
+  itemId: number;
+  itemName: string;
+  quantity: number;
+  price: number;
+  total: number;
+}
+
+export interface BackendOrderReadDto {
+  id: number;
+  personId: number;
+  personName: string;
+  number: number;
+  createdAt: string;
+  orderDetails: BackendOrderDetailReadDto[] | { $values: BackendOrderDetailReadDto[] };
 }
 
 @Injectable({
@@ -52,8 +83,11 @@ export class OrderService {
    * Get all orders
    */
   getOrders(): Observable<OrderReadDto[]> {
-    return this.http.get<OrderReadDto[]>(this.apiUrl).pipe(
-      map(response => (Array.isArray(response) ? response : response['$values'] || [])),
+    return this.http.get<any>(this.apiUrl).pipe(
+      map((response: any) => {
+        const arr: BackendOrderReadDto[] = Array.isArray(response) ? response : (response?.$values ?? []);
+        return arr.map((o) => this.mapBackendToFront(o));
+      }),
       catchError(() => of([]))
     );
   }
@@ -63,7 +97,8 @@ export class OrderService {
    */
   getOrder(id: number): Observable<OrderReadDto | null> {
     if (!id) return of(null);
-    return this.http.get<OrderReadDto>(`${this.apiUrl}/${id}`).pipe(
+    return this.http.get<BackendOrderReadDto>(`${this.apiUrl}/${id}`).pipe(
+      map((o) => this.mapBackendToFront(o)),
       catchError(() => of(null))
     );
   }
@@ -71,24 +106,18 @@ export class OrderService {
   /**
    * Create a new order
    */
-  createOrder(order: OrderCreateDto): Observable<OrderReadDto | null> {
-    return this.http.post<OrderReadDto>(this.apiUrl, order).pipe(
-      catchError((error) => {
-        console.error('Error creating order:', error);
-        return of(null);
-      })
+  createOrderV2(dto: BackendOrderCreateDto): Observable<OrderReadDto | null> {
+    return this.http.post<BackendOrderReadDto>(this.apiUrl, dto).pipe(
+      map((o) => this.mapBackendToFront(o))
     );
   }
 
   /**
    * Update an existing order
    */
-  updateOrder(id: number, order: Partial<OrderCreateDto>): Observable<OrderReadDto | null> {
-    return this.http.put<OrderReadDto>(`${this.apiUrl}/${id}`, order).pipe(
-      catchError((error) => {
-        console.error('Error updating order:', error);
-        return of(null);
-      })
+  updateOrderV2(id: number, dto: BackendOrderCreateDto): Observable<OrderReadDto | null> {
+    return this.http.put<void>(`${this.apiUrl}/${id}`, dto).pipe(
+      map(() => ({ id, number: 0, customerName: '', customerEmail: '', items: [], status: 'UPDATED', createdAt: new Date().toISOString(), totalAmount: 0 } as OrderReadDto))
     );
   }
 
@@ -112,5 +141,34 @@ export class OrderService {
       map(() => true),
       catchError(() => of(false))
     );
+  }
+
+  // Map backend read dto to front read dto expected by current UI
+  private mapBackendToFront(o: BackendOrderReadDto): OrderReadDto {
+    const details = Array.isArray((o as any).orderDetails)
+      ? (o as any).orderDetails as BackendOrderDetailReadDto[]
+      : ((o as any).orderDetails?.$values as BackendOrderDetailReadDto[] | undefined) ?? [];
+
+    const items: OrderItemDto[] = details.map(d => ({
+      itemId: d.itemId,
+      itemName: d.itemName,
+      quantity: d.quantity,
+      unitPrice: Number(d.price)
+    }));
+
+    const totalAmount = details.reduce((sum, d) => sum + Number(d.total), 0);
+
+    return {
+      id: o.id,
+      number: o.number,
+      personId: (o as any).personId,
+      customerName: o.personName,
+      customerEmail: '',
+      items,
+      status: 'OK',
+      createdAt: o.createdAt,
+      updatedAt: undefined,
+      totalAmount
+    };
   }
 }

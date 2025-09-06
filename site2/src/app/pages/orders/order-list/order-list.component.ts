@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
-import { OrderService, OrderReadDto, OrderCreateDto, OrderItemDto } from '../../../services/order.service';
+import { OrderService, OrderReadDto, OrderCreateDto, OrderItemDto, BackendOrderCreateDto } from '../../../services/order.service';
 import { ProductService } from '../../../services/product.service';
 import { Product } from '../../../models/product';
 import { FormsModule } from '@angular/forms';
@@ -318,46 +318,8 @@ export class OrderListComponent implements OnInit {
   }
 
   createOrder(): void {
-    if (!this.newOrder.customerName) {
-      this.snackBar.open('Por favor ingrese el nombre del cliente', 'Cerrar', { duration: 3000 });
-      return;
-    }
-
-    if (!this.newOrder.customerEmail) {
-      this.snackBar.open('Por favor ingrese el correo electrónico del cliente', 'Cerrar', { duration: 3000 });
-      return;
-    }
-
-    if (this.newOrder.items.length === 0) {
-      this.snackBar.open('Debe agregar al menos un ítem a la orden', 'Cerrar', { duration: 3000 });
-      return;
-    }
-
-    if (confirm('¿Está seguro de crear esta orden?')) {
-      this.isSaving = true;
-      this.orderService.createOrder(this.newOrder).subscribe({
-        next: (order) => {
-          this.isSaving = false;
-          if (order) {
-            this.snackBar.open('¡Orden creada exitosamente!', 'Cerrar', { duration: 3000 });
-            this.loadOrders();
-            this.resetNewOrderForm();
-            this.showNewOrderForm = false;
-          } else {
-            this.snackBar.open('Error al crear la orden', 'Cerrar', { duration: 3000 });
-          }
-        },
-        error: (err) => {
-          this.isSaving = false;
-          console.error('Error creating order:', err);
-          this.snackBar.open(
-            'Error al crear la orden: ' + (err.error?.message || err.message || 'Error desconocido'),
-            'Cerrar',
-            { duration: 5000 }
-          );
-        }
-      });
-    }
+    // Redirigir a la pantalla de creación/edición que ya tiene selector de cliente (personId)
+    this.router.navigate(['/orders/new']);
   }
 
   private resetNewOrderForm(): void {

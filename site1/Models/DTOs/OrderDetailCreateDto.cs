@@ -23,13 +23,9 @@ namespace MessageApi.Models.DTOs
         public int Quantity { get; set; }
 
         /// <summary>
-        /// Precio unitario del ítem en el momento de la compra.
-        /// Debe ser un valor numérico mayor a 0 con hasta 2 decimales.
+        /// Precio unitario (opcional). El backend calculará y asignará el precio actual del ítem.
         /// </summary>
-        [Required(ErrorMessage = "El precio es obligatorio")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "El precio debe ser mayor a 0")]
-        [RegularExpression(@"^\d+(\.\d{1,2})?$", ErrorMessage = "El precio debe tener hasta 2 decimales")]
-        public decimal Price { get; set; }
+        public decimal? Price { get; set; }
     }
 }
 

@@ -147,8 +147,8 @@
               {{ p.name || '—' }}
             </td>
 
-            <!-- Precio con pipe currency (según i18n de la app) -->
-            <td>{{ p.price | currency }}</td>
+            <!-- Precio en Quetzales (GTQ); usa LOCALE_ID='es-GT' registrado en main.ts -->
+            <td>{{ p.price | currency:'GTQ':'symbol':'1.2-2' }}</td>
 
             <!-- Descripción truncada; muestra 'Sin descripción' si falta -->
             <td class="text-truncate" style="max-width: 320px;" [title]="p.description">

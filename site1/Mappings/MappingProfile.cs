@@ -50,6 +50,16 @@ namespace MessageApi.Mappings
 
             // Mapeo de Product a ProductReadDto
             CreateMap<Product, ProductReadDto>();
+
+            // Mapeos para Item
+            CreateMap<Item, ItemReadDto>();
+            CreateMap<ItemCreateDto, Item>()
+                .ForMember(dest => dest.Id, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
+            CreateMap<ItemUpdateDto, Item>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
             
             // Mapeo de ProductCreateDto a Product
             CreateMap<ProductCreateDto, Product>()

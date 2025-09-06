@@ -204,22 +204,24 @@ export class ProductEditComponent implements OnInit {
     this.productService.create(productData).subscribe({
       next: (product) => {
         if (product) {
-          // Muestra mensaje de éxito y redirige a la lista de productos
           this.snackBar.open('Producto creado correctamente', 'Cerrar', { 
             duration: 3000,
             panelClass: ['success-snackbar']
           });
+          this.isLoading = false; // Asegura detener spinner
           this.router.navigate(['/products']);
+        } else {
+          // Si no vino producto, consideramos flujo no exitoso
+          this.isLoading = false;
         }
       },
       error: (err) => {
-        // Manejo de errores
         console.error('Error al crear el producto:', err);
         this.snackBar.open('Error al crear el producto', 'Cerrar', { 
           duration: 5000,
           panelClass: ['error-snackbar']
         });
-        this.isLoading = false; // Desactiva el indicador de carga
+        this.isLoading = false;
       }
     });
   }
@@ -234,29 +236,27 @@ export class ProductEditComponent implements OnInit {
     this.productService.update(updateData.id, updateData).subscribe({
       next: (success) => {
         if (success) {
-          // Actualización exitosa
           this.snackBar.open('Producto actualizado correctamente', 'Cerrar', { 
             duration: 3000,
             panelClass: ['success-snackbar']
           });
+          this.isLoading = false;
           this.router.navigate(['/products']);
         } else {
-          // La actualización no tuvo éxito (pero no hubo error HTTP)
           this.snackBar.open('No se pudo actualizar el producto', 'Cerrar', { 
             duration: 5000,
             panelClass: ['warning-snackbar']
           });
-          this.isLoading = false; // Desactiva el indicador de carga
+          this.isLoading = false;
         }
       },
       error: (err) => {
-        // Error en la petición HTTP
         console.error('Error al actualizar el producto:', err);
         this.snackBar.open('Error al actualizar el producto', 'Cerrar', { 
           duration: 5000,
           panelClass: ['error-snackbar']
         });
-        this.isLoading = false; // Desactiva el indicador de carga
+        this.isLoading = false;
       }
     });
   }

@@ -37,18 +37,29 @@ namespace MessageApi.Repositories
         {
             if (product == null) throw new ArgumentNullException(nameof(product));
 
-            var entity = new Product
+            // Persist as Item and map back to Product shape
+            var item = new Item
             {
                 Name = product.Name ?? throw new ArgumentNullException(nameof(product.Name)),
                 Price = product.Price,
                 Description = product.Description ?? string.Empty,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = null
+                Stock = 0,
+                CreatedBy = 0,
+                CreatedAt = DateTime.UtcNow
             };
-            
-            _context.Products.Add(entity);
+
+            _context.Items.Add(item);
             await _context.SaveChangesAsync();
-            return entity;
+
+            return new Product
+            {
+                Id = item.Id,
+                Name = item.Name,
+                Price = item.Price,
+                Description = item.Description ?? string.Empty,
+                CreatedAt = item.CreatedAt,
+                UpdatedAt = item.UpdatedAt
+            };
         }
 
         /// <summary>
@@ -58,9 +69,19 @@ namespace MessageApi.Repositories
         /// <returns>Colección de todos los productos</returns>
         public async Task<IEnumerable<Product>> GetAllProductsAsync()
         {
-            return await _context.Products
-                .OrderBy(p => p.Id)
+            var items = await _context.Items
+                .OrderBy(i => i.Id)
                 .ToListAsync();
+
+            return items.Select(item => new Product
+            {
+                Id = item.Id,
+                Name = item.Name,
+                Price = item.Price,
+                Description = item.Description ?? string.Empty,
+                CreatedAt = item.CreatedAt,
+                UpdatedAt = item.UpdatedAt
+            });
         }
 
         /// <summary>
@@ -72,8 +93,18 @@ namespace MessageApi.Repositories
         public async Task<Product?> GetProductByIdAsync(int id)
         {
             if (id <= 0) throw new ArgumentOutOfRangeException(nameof(id), "El ID debe ser mayor que cero");
-            
-            return await _context.Products.FindAsync(id);
+
+            var item = await _context.Items.FindAsync(id);
+            if (item == null) return null;
+            return new Product
+            {
+                Id = item.Id,
+                Name = item.Name,
+                Price = item.Price,
+                Description = item.Description ?? string.Empty,
+                CreatedAt = item.CreatedAt,
+                UpdatedAt = item.UpdatedAt
+            };
         }
 
         /// <summary>
@@ -85,17 +116,26 @@ namespace MessageApi.Repositories
         public async Task<Product?> UpdateProductAsync(Product product)
         {
             if (product == null) throw new ArgumentNullException(nameof(product));
-            
-            var existing = await _context.Products.FindAsync(product.Id);
-            if (existing == null) return null;
-            
-            existing.Name = product.Name ?? throw new ArgumentNullException(nameof(product.Name));
-            existing.Price = product.Price;
-            existing.Description = product.Description ?? string.Empty;
-            existing.UpdatedAt = DateTime.UtcNow;
-            
+
+            var item = await _context.Items.FindAsync(product.Id);
+            if (item == null) return null;
+
+            item.Name = product.Name ?? throw new ArgumentNullException(nameof(product.Name));
+            item.Price = product.Price;
+            item.Description = product.Description ?? string.Empty;
+            item.UpdatedAt = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
-            return existing;
+
+            return new Product
+            {
+                Id = item.Id,
+                Name = item.Name,
+                Price = item.Price,
+                Description = item.Description ?? string.Empty,
+                CreatedAt = item.CreatedAt,
+                UpdatedAt = item.UpdatedAt
+            };
         }
 
         #region IDisposable Support
@@ -129,11 +169,11 @@ namespace MessageApi.Repositories
         public async Task<bool> DeleteProductAsync(int id)
         {
             if (id <= 0) throw new ArgumentOutOfRangeException(nameof(id), "El ID debe ser mayor que cero");
-            
-            var product = await _context.Products.FindAsync(id);
-            if (product == null) return false;
-            
-            _context.Products.Remove(product);
+
+            var item = await _context.Items.FindAsync(id);
+            if (item == null) return false;
+
+            _context.Items.Remove(item);
             await _context.SaveChangesAsync();
             return true;
         }

@@ -4,13 +4,14 @@ import { Observable, startWith, map } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { OrderService, OrderCreateDto, OrderReadDto } from '../../../services/order.service';
-import { ProductService } from '../../../services/product.service';
+import { OrderService, OrderCreateDto, OrderReadDto, BackendOrderCreateDto } from '../../../services/order.service';
 import { PersonService } from '../../../services/person.service';
+import { ProductService } from '../../../services/product.service';
+import { Product } from '../../../models/product';
+
 import { MaterialModule } from '../../../material.module';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { Product } from '../../../models/product';
 
 interface Customer {
   id: number;
@@ -46,6 +47,21 @@ export class OrderEditComponent implements OnInit {
   customers: Customer[] = [];
   filteredCustomers: Observable<Customer[]>;
   customerNameControl = new FormControl('');
+  // Track selected personId aligned with backend
+  selectedPersonId: number | null = null;
+  // Product search
+  productFilter = new FormControl('');
+  filteredProducts!: Observable<Product[]>;
+  clearProductFilter() { this.productFilter.setValue(''); }
+
+  private normalize(text: string): string {
+    return (text || '')
+      .toString()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}+/gu, '')
+      .trim();
+  }
 
   constructor(
     private fb: FormBuilder,
@@ -53,8 +69,8 @@ export class OrderEditComponent implements OnInit {
     private router: Router,
     private snackBar: MatSnackBar,
     private orderService: OrderService,
-    private productService: ProductService,
-    private personService: PersonService
+    private personService: PersonService,
+    private productService: ProductService
   ) {
     this.orderForm = this.fb.group({
       customerName: ['', [Validators.required, Validators.minLength(3)]],
@@ -82,6 +98,7 @@ export class OrderEditComponent implements OnInit {
           customerName: `${value.firstName || ''} ${value.lastName || ''}`.trim(),
           customerEmail: value.email || ''
         }, { emitEvent: false });
+        this.selectedPersonId = value.id;
       }
     });
     
@@ -112,13 +129,28 @@ export class OrderEditComponent implements OnInit {
 
   loadProducts() {
     this.productService.getAll().subscribe({
-      next: (products) => {
+      next: (products: Product[]) => {
         this.products = products;
         if (this.items.length === 0 && products.length > 0) {
           this.addOrderItem();
         }
+        // Setup product filter stream
+        this.filteredProducts = this.productFilter.valueChanges.pipe(
+          startWith(''),
+          map(term => {
+            const t = this.normalize(term as string);
+            if (!t) return this.products;
+            const num = Number(t);
+            return this.products.filter(p => {
+              const name = this.normalize(p.name || '');
+              const desc = this.normalize(p.description || '');
+              const idMatch = !Number.isNaN(num) && (p.id?.toString().includes(num.toString()));
+              return name.includes(t) || desc.includes(t) || idMatch;
+            });
+          })
+        );
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading products:', error);
         this.snackBar.open('Error al cargar los productos', 'Cerrar', { duration: 3000 });
       },
@@ -131,13 +163,14 @@ export class OrderEditComponent implements OnInit {
   loadOrder(id: number) {
     this.isLoading = true;
     this.orderService.getOrder(id).subscribe({
-      next: (order) => {
+      next: (order: OrderReadDto | null) => {
         if (order) {
           this.orderForm.patchValue({
             customerName: order.customerName,
             customerEmail: order.customerEmail,
             status: order.status
           });
+          this.selectedPersonId = order.personId ?? null;
 
           // Clear existing items
           while (this.items.length) {
@@ -156,7 +189,7 @@ export class OrderEditComponent implements OnInit {
         }
         this.isLoading = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading order:', error);
         this.snackBar.open('Error al cargar la orden', 'Cerrar', { duration: 3000 });
         this.isLoading = false;
@@ -165,12 +198,12 @@ export class OrderEditComponent implements OnInit {
   }
 
   private addOrderItem() {
-    const defaultProduct = this.products[0];
+    const defaultItem = this.products[0];
     this.items.push(this.fb.group({
-      itemId: [defaultProduct?.id || '', Validators.required],
-      itemName: [defaultProduct?.name || ''],
+      itemId: [defaultItem?.id || '', Validators.required],
+      itemName: [defaultItem?.name || ''],
       quantity: [1, [Validators.required, Validators.min(1)]],
-      unitPrice: [defaultProduct?.price || 0, [Validators.required, Validators.min(0)]]
+      unitPrice: [defaultItem?.price || 0, [Validators.required, Validators.min(0)]]
     }));
   }
 
@@ -184,12 +217,12 @@ export class OrderEditComponent implements OnInit {
   onProductChange(index: number) {
     const itemGroup = this.items.at(index);
     const productId = itemGroup.get('itemId')?.value;
-    const product = this.products.find(p => p.id === productId);
+    const it = this.products.find(p => p.id === productId);
     
-    if (product) {
+    if (it) {
       itemGroup.patchValue({
-        itemName: product.name,
-        unitPrice: product.price
+        itemName: it.name,
+        unitPrice: it.price
       });
     }
   }
@@ -211,25 +244,43 @@ export class OrderEditComponent implements OnInit {
       return;
     }
 
+    // Validar que exista un cliente seleccionado (personId)
+    if (!this.selectedPersonId || this.selectedPersonId <= 0) {
+      this.snackBar.open('Seleccione un cliente válido', 'Cerrar', { duration: 3000, panelClass: ['error-snackbar'] });
+      return;
+    }
+
+    // Validar que exista al menos un detalle con itemId y quantity válidos
+    const rawItems = (this.orderForm.value.items || []) as any[];
+    if (!rawItems.length) {
+      this.snackBar.open('Agregue al menos un producto a la orden', 'Cerrar', { duration: 3000, panelClass: ['error-snackbar'] });
+      return;
+    }
+    const invalid = rawItems.some(it => !it?.itemId || Number(it.quantity) <= 0);
+    if (invalid) {
+      this.snackBar.open('Revise los productos: cantidad debe ser mayor a 0 y el producto es obligatorio', 'Cerrar', { duration: 4000, panelClass: ['error-snackbar'] });
+      return;
+    }
+
     this.isSubmitting = true;
-    const orderData: OrderCreateDto = {
-      customerName: this.orderForm.value.customerName,
-      customerEmail: this.orderForm.value.customerEmail,
-      status: this.orderForm.value.status,
-      items: this.orderForm.value.items.map((item: any) => ({
-        itemId: item.itemId,
-        itemName: item.itemName,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice
+    const dto: BackendOrderCreateDto = {
+      personId: this.selectedPersonId ?? 1, // TODO: enforce selection in UI
+      createdBy: 1,
+      orderDetails: rawItems.map((item: any) => ({
+        itemId: Number(item.itemId),
+        quantity: Number(item.quantity)
       }))
     };
 
-    const request = this.isEditMode && this.orderId
-      ? this.orderService.updateOrder(this.orderId, orderData)
-      : this.orderService.createOrder(orderData);
+    // Debug: inspeccionar payload antes de enviar
+    console.log('Create/Update Order DTO =>', dto);
+
+    const request = (this.isEditMode && this.orderId)
+      ? this.orderService.updateOrderV2(this.orderId, dto)
+      : this.orderService.createOrderV2(dto);
 
     request.subscribe({
-      next: (order) => {
+      next: (order: OrderReadDto | null) => {
         if (order) {
           this.snackBar.open(
             `Orden ${this.isEditMode ? 'actualizada' : 'creada'} correctamente`,
@@ -241,12 +292,13 @@ export class OrderEditComponent implements OnInit {
           throw new Error('No se recibió respuesta del servidor');
         }
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error saving order:', error);
+        const details = (error?.error && (error.error.errors || error.error.title || error.error.detail)) ? JSON.stringify(error.error) : (error.message || 'Error desconocido');
         this.snackBar.open(
-          `Error al ${this.isEditMode ? 'actualizar' : 'crear'} la orden: ${error.message || 'Error desconocido'}`,
+          `Error al ${this.isEditMode ? 'actualizar' : 'crear'} la orden: ${details}`,
           'Cerrar',
-          { duration: 5000, panelClass: ['error-snackbar'] }
+          { duration: 6000, panelClass: ['error-snackbar'] }
         );
         this.isSubmitting = false;
       }
@@ -286,6 +338,16 @@ export class OrderEditComponent implements OnInit {
         }));
         
         console.log('Clientes cargados:', this.customers);
+
+        // Auto-seleccionar el primer cliente si no hay uno seleccionado aún (solo en modo creación)
+        if (!this.isEditMode && !this.selectedPersonId && this.customers.length > 0) {
+          const first = this.customers[0];
+          this.selectedPersonId = first.id;
+          this.orderForm.patchValue({
+            customerName: `${first.firstName || ''} ${first.lastName || ''}`.trim(),
+            customerEmail: first.email || ''
+          }, { emitEvent: false });
+        }
       },
       error: (error) => {
         console.error('Error al cargar clientes:', error);
@@ -325,6 +387,7 @@ export class OrderEditComponent implements OnInit {
         customerName: `${customer.firstName || ''} ${customer.lastName || ''}`.trim(),
         customerEmail: customer.email || ''
       }, { emitEvent: false });
+      this.selectedPersonId = customer.id;
     }
   }
 

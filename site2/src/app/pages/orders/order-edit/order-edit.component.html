@@ -43,16 +43,26 @@
         <div *ngFor="let item of items.controls; let i=index" [formGroupName]="i" class="item-row mb-3 p-3 border rounded">
           <div class="row align-items-center">
             <div class="col-md-6">
+              <mat-form-field appearance="outline" class="w-100 mb-2">
+                <mat-label>Buscar producto</mat-label>
+                <input matInput [formControl]="productFilter" placeholder="Nombre o descripción" />
+                <mat-hint>Escriba para filtrar la lista de productos</mat-hint>
+              </mat-form-field>
+
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label>Producto</mat-label>
-                <mat-select formControlName="itemId" required>
-                  <mat-option *ngFor="let product of products" [value]="product.id">
-                    {{ product.name }} - ${{ product.price }}
+                <mat-select formControlName="itemId" required (selectionChange)="onProductChange(i)">
+                  <mat-option *ngIf="(products?.length || 0) === 0" disabled>
+                    No hay productos disponibles
+                  </mat-option>
+                  <mat-option *ngFor="let p of (filteredProducts | async)" [value]="p.id">
+                    {{ p.name }} - ${{ p.price }}
                   </mat-option>
                 </mat-select>
                 <mat-error *ngIf="item.get('itemId')?.hasError('required')">
                   El producto es requerido
                 </mat-error>
+                <mat-hint *ngIf="(products?.length || 0) > 0">Seleccione un producto</mat-hint>
               </mat-form-field>
             </div>
             

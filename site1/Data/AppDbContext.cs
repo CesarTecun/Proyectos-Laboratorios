@@ -7,73 +7,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<Person> Persons => Set<Person>();
-    public DbSet<Product> Products => Set<Product>();
-    public DbSet<Client> Clients => Set<Client>();
-    public DbSet<Invoice> Invoices => Set<Invoice>();
-    public DbSet<Detail> Details => Set<Detail>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderDetail> OrderDetails => Set<OrderDetail>();
     public DbSet<Item> Items => Set<Item>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Configuración de Client
-        modelBuilder.Entity<Client>(entity =>
-        {
-            entity.Property(c => c.FirstName).IsRequired();
-            entity.Property(c => c.LastName).IsRequired();
-            entity.Property(c => c.Email).IsRequired();
-            entity.Property(c => c.Nit).IsRequired();
-            entity.Property(c => c.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-            entity.Property(c => c.UpdatedAt).IsRequired(false);
-        });
-
-        // Configuración de Invoice
-        modelBuilder.Entity<Invoice>(entity =>
-        {
-            entity.Property(i => i.Serial).IsRequired();
-            entity.Property(i => i.Number).IsRequired();
-            entity.Property(i => i.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-            entity.Property(i => i.UpdatedAt).IsRequired(false);
-            
-            entity.HasOne(i => i.Client)
-                .WithMany(c => c.Invoices)
-                .HasForeignKey(i => i.ClientId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        // Configuración de Product
-        modelBuilder.Entity<Product>(entity =>
-        {
-            entity.Property(p => p.Name)
-                .IsRequired()
-                .HasMaxLength(100);
-                
-            entity.Property(p => p.CreatedAt)
-                .HasDefaultValueSql("GETUTCDATE()");
-                
-            entity.Property(p => p.UpdatedAt)
-                .IsRequired(false);
-        });
-
-        // Configuración de Detail
-        modelBuilder.Entity<Detail>(entity =>
-        {
-            entity.Property(d => d.Price).HasColumnType("decimal(18,2)");
-            entity.Property(d => d.Total).HasColumnType("decimal(18,2)");
-            entity.Property(d => d.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
-            entity.Property(d => d.UpdatedAt).IsRequired(false);
-            
-            entity.HasOne(d => d.Invoice)
-                .WithMany(i => i.Details)
-                .HasForeignKey(d => d.InvoiceId)
-                .OnDelete(DeleteBehavior.Cascade);
-                
-            entity.HasOne(d => d.Product)
-                .WithMany(p => p.Details)
-                .HasForeignKey(d => d.ProductId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
+        // Eliminadas configuraciones de Client/Invoice/Detail/Product (no usadas)
 
         // Configuración de Person
         modelBuilder.Entity<Person>(entity =>
@@ -103,6 +43,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         {
             entity.Property(i => i.Name).IsRequired();
             entity.Property(i => i.Price).HasColumnType("decimal(18,2)");
+            entity.Property(i => i.Description).HasMaxLength(500);
+            entity.Property(i => i.Stock).HasDefaultValue(0);
             entity.Property(i => i.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             entity.Property(i => i.UpdatedAt).IsRequired(false);
         });

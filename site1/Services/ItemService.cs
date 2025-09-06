@@ -36,6 +36,10 @@ namespace MessageApi.Services
         public async Task<ItemReadDto> CreateItemAsync(ItemCreateDto itemCreateDto)
         {
             var item = _mapper.Map<Item>(itemCreateDto);
+            // Ensure required audit fields
+            item.CreatedBy = item.CreatedBy == 0 ? 1 : item.CreatedBy; // default system user
+            item.UpdatedBy = 0;
+            item.UpdatedAt = null;
             _context.Items.Add(item);
             await _context.SaveChangesAsync();
             return _mapper.Map<ItemReadDto>(item);

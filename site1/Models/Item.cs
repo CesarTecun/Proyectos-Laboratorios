@@ -34,6 +34,18 @@ namespace MessageApi.Models
         public required decimal Price { get; set; }
 
         /// <summary>
+        /// Descripción del artículo (opcional)
+        /// </summary>
+        [StringLength(500, ErrorMessage = "La descripción no puede exceder los 500 caracteres")]
+        public string? Description { get; set; }
+
+        /// <summary>
+        /// Stock disponible del artículo
+        /// </summary>
+        [Range(0, int.MaxValue, ErrorMessage = "El stock no puede ser negativo")]
+        public int Stock { get; set; }
+
+        /// <summary>
         /// ID del usuario que creó el registro.
         /// </summary>
         [Required]

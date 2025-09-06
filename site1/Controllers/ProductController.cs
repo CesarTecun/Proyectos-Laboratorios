@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using MessageApi.Models;
@@ -18,16 +19,16 @@ namespace MessageApi.Controllers
     [Route("api/[controller]")]
     public class ProductController : ControllerBase
     {
-        private readonly IProductService _productService;
+        private readonly IItemService _itemService;
         private readonly ILogger<ProductController> _logger;
         private readonly IMapper _mapper;
 
         public ProductController(
-            IProductService productService,
+            IItemService itemService,
             ILogger<ProductController> logger,
             IMapper mapper)
         {
-            _productService = productService ?? throw new ArgumentNullException(nameof(productService));
+            _itemService = itemService ?? throw new ArgumentNullException(nameof(itemService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
@@ -40,7 +41,17 @@ namespace MessageApi.Controllers
         {
             try
             {
-                var products = await _productService.GetAllProductsAsync();
+                var items = await _itemService.GetAllItemsAsync();
+                // Map ItemReadDto -> ProductReadDto to preserve response shape
+                var products = items.Select(i => new ProductReadDto
+                {
+                    Id = i.Id,
+                    Name = i.Name,
+                    Price = i.Price,
+                    Description = i.Description,
+                    CreatedAt = i.CreatedAt,
+                    UpdatedAt = i.UpdatedAt
+                });
                 return Ok(products);
             }
             catch (Exception ex)
@@ -58,12 +69,21 @@ namespace MessageApi.Controllers
         {
             try
             {
-                var product = await _productService.GetProductByIdAsync(id);
-                if (product == null)
+                var item = await _itemService.GetItemByIdAsync(id);
+                if (item == null)
                 {
                     return NotFound();
                 }
-                return Ok(_mapper.Map<ProductReadDto>(product));
+                var productDto = new ProductReadDto
+                {
+                    Id = item.Id,
+                    Name = item.Name,
+                    Price = item.Price,
+                    Description = item.Description,
+                    CreatedAt = item.CreatedAt,
+                    UpdatedAt = item.UpdatedAt
+                };
+                return Ok(productDto);
             }
             catch (Exception ex)
             {
@@ -85,8 +105,24 @@ namespace MessageApi.Controllers
                     return BadRequest(ModelState);
                 }
 
-                var product = await _productService.CreateProductAsync(productCreateDto);
-                var productReadDto = _mapper.Map<ProductReadDto>(product);
+                // Map ProductCreateDto -> ItemCreateDto (Stock default 0)
+                var itemCreate = new ItemCreateDto
+                {
+                    Name = productCreateDto.Name,
+                    Price = productCreateDto.Price,
+                    Description = productCreateDto.Description,
+                    Stock = 0
+                };
+                var itemRead = await _itemService.CreateItemAsync(itemCreate);
+                var productReadDto = new ProductReadDto
+                {
+                    Id = itemRead.Id,
+                    Name = itemRead.Name,
+                    Price = itemRead.Price,
+                    Description = itemRead.Description,
+                    CreatedAt = itemRead.CreatedAt,
+                    UpdatedAt = itemRead.UpdatedAt
+                };
                 return CreatedAtAction(nameof(GetById), new { id = productReadDto.Id }, productReadDto);
             }
             catch (Exception ex)
@@ -114,8 +150,17 @@ namespace MessageApi.Controllers
                     return BadRequest(ModelState);
                 }
 
-                var updatedProduct = await _productService.UpdateProductAsync(id, productUpdateDto);
-                if (updatedProduct == null)
+                // Map ProductUpdateDto -> ItemUpdateDto
+                var itemUpdate = new ItemUpdateDto
+                {
+                    Id = id,
+                    Name = productUpdateDto.Name,
+                    Price = productUpdateDto.Price,
+                    Description = productUpdateDto.Description,
+                    Stock = productUpdateDto.Stock
+                };
+                var updated = await _itemService.UpdateItemAsync(id, itemUpdate);
+                if (!updated)
                 {
                     return NotFound();
                 }
@@ -137,13 +182,13 @@ namespace MessageApi.Controllers
         {
             try
             {
-                var product = await _productService.GetProductByIdAsync(id);
-                if (product == null)
+                var item = await _itemService.GetItemByIdAsync(id);
+                if (item == null)
                 {
                     return NotFound();
                 }
 
-                await _productService.DeleteProductAsync(id);
+                await _itemService.DeleteItemAsync(id);
                 return NoContent();
             }
             catch (Exception ex)
