@@ -50,6 +50,14 @@ namespace MessageApi.Repositories
         /// </summary>
         /// <returns>El siguiente número de orden disponible</returns>
         Task<int> GetNextOrderNumberAsync();
+
+        /// <summary>
+        /// Actualiza únicamente el estado de una orden.
+        /// </summary>
+        /// <param name="id">ID de la orden</param>
+        /// <param name="status">Nuevo estado</param>
+        /// <returns>True si se actualizó, False si no existe</returns>
+        Task<bool> UpdateStatusAsync(int id, string status, int updatedBy);
     }
 }
 

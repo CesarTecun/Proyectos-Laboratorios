@@ -42,6 +42,11 @@ namespace MessageApi.Services
         Task<bool> UpdateOrderAsync(int id, OrderCreateDto orderDto);
         
         /// <summary>
+        /// Actualiza únicamente el estado de una orden y retorna la orden resultante.
+        /// </summary>
+        Task<OrderReadDto?> UpdateStatusAsync(int id, string status, int updatedBy);
+        
+        /// <summary>
         /// Elimina una orden por su identificador único de forma asíncrona.
         /// </summary>
         /// <param name="id">Identificador único de la orden a eliminar</param>

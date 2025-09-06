@@ -117,21 +117,24 @@
               {{ order.customerName || '—' }}
               <small class="text-muted d-block" *ngIf="order.customerEmail">{{ order.customerEmail }}</small>
             </td>
-            <td>{{ getOrderTotal(order) | currency }}</td>
+            <td>{{ getOrderTotal(order) | currency:'GTQ':'symbol':'1.2-2' }}</td>
             <td>
               <span class="badge" [ngClass]="{
-                'bg-warning text-dark': order.status === 'PENDING',
-                'bg-success': order.status === 'COMPLETED',
-                'bg-danger': order.status === 'CANCELLED' || order.status === 'CANCELED'
+                'bg-warning text-dark': normalizeStatus(order.status) === 'PENDING',
+                'bg-success text-black': normalizeStatus(order.status) === 'COMPLETED',
+                'bg-danger text-black': normalizeStatus(order.status) === 'CANCELLED'
               }">
-                {{ order.status || 'PENDING' }}
+                {{ statusLabel(order.status) }}
               </span>
             </td>
             <td>{{ order.createdAt | date:'short' }}</td>
             <td>{{ order.updatedAt ? (order.updatedAt | date:'short') : '—' }}</td>
             <td class="text-end">
-              <button mat-icon-button color="primary" [routerLink]="['/orders', order.id]" matTooltip="Ver/Editar">
+              <button mat-icon-button color="primary" [routerLink]="['/orders/view', order.id]" matTooltip="Ver">
                 <mat-icon>visibility</mat-icon>
+              </button>
+              <button mat-icon-button color="primary" [routerLink]="['/orders/edit', order.id]" matTooltip="Editar">
+                <mat-icon>edit</mat-icon>
               </button>
               <button mat-icon-button color="accent" (click)="updateOrderStatus(order.id, 'COMPLETED')" matTooltip="Marcar como completada" *ngIf="order.status !== 'COMPLETED'">
                 <mat-icon>check_circle</mat-icon>

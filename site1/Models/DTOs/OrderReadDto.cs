@@ -33,6 +33,16 @@ namespace MessageApi.Models.DTOs
         public DateTime CreatedAt { get; set; }
 
         /// <summary>
+        /// Fecha y hora de última actualización de la orden (si existe)
+        /// </summary>
+        public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// Estado actual de la orden (PENDING, COMPLETED, CANCELLED)
+        /// </summary>
+        public string Status { get; set; } = string.Empty;
+
+        /// <summary>
         /// Lista de detalles de la orden.
         /// Incluye información sobre los ítems, cantidades y precios.
         /// </summary>

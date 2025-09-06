@@ -125,7 +125,8 @@ export class OrderService {
    * Update order status
    */
   updateStatus(id: number, status: string): Observable<OrderReadDto | null> {
-    return this.http.patch<OrderReadDto>(`${this.apiUrl}/${id}/status`, { status }).pipe(
+    return this.http.patch<BackendOrderReadDto>(`${this.apiUrl}/${id}/status`, { status }).pipe(
+      map((o) => this.mapBackendToFront(o)),
       catchError((error) => {
         console.error('Error updating order status:', error);
         return of(null);
@@ -158,6 +159,26 @@ export class OrderService {
 
     const totalAmount = details.reduce((sum, d) => sum + Number(d.total), 0);
 
+    // Canonicalizar estado a códigos UI: PENDING | COMPLETED | CANCELLED
+    const rawStatus = ((o as any).status ?? '').toString().trim().toUpperCase();
+    let statusCanon: 'PENDING' | 'COMPLETED' | 'CANCELLED';
+    switch (rawStatus) {
+      case 'PENDIENTE':
+      case 'PENDING':
+      default:
+        statusCanon = 'PENDING';
+        break;
+      case 'COMPLETED':
+      case 'COMPLETADA':
+        statusCanon = 'COMPLETED';
+        break;
+      case 'CANCELLED':
+      case 'CANCELED':
+      case 'CANCELADA':
+        statusCanon = 'CANCELLED';
+        break;
+    }
+
     return {
       id: o.id,
       number: o.number,
@@ -165,7 +186,7 @@ export class OrderService {
       customerName: o.personName,
       customerEmail: '',
       items,
-      status: 'OK',
+      status: statusCanon,
       createdAt: o.createdAt,
       updatedAt: undefined,
       totalAmount

@@ -46,7 +46,7 @@ export class OrderEditComponent implements OnInit {
   // Customer autocomplete
   customers: Customer[] = [];
   filteredCustomers: Observable<Customer[]>;
-  customerNameControl = new FormControl('');
+  customerNameControl = new FormControl<string | Customer>('');
   // Track selected personId aligned with backend
   selectedPersonId: number | null = null;
   // Product search
@@ -171,6 +171,42 @@ export class OrderEditComponent implements OnInit {
             status: order.status
           });
           this.selectedPersonId = order.personId ?? null;
+
+          // Intentar completar datos del cliente (nombre y email) desde Person
+          const setCustomerFrom = (c: Customer) => {
+            this.orderForm.patchValue({
+              customerName: `${c.firstName || ''} ${c.lastName || ''}`.trim(),
+              customerEmail: c.email || ''
+            }, { emitEvent: false });
+            // Mostrar en el input de autocompletado
+            this.customerNameControl.setValue(c, { emitEvent: false });
+          };
+
+          if (this.selectedPersonId) {
+            // Si ya tenemos la lista de clientes cargada, usarla; si no, cargar y luego asignar
+            const existing = this.customers.find(c => c.id === this.selectedPersonId);
+            if (existing) {
+              setCustomerFrom(existing);
+            } else {
+              this.personService.getAll().subscribe({
+                next: (response: any) => {
+                  let people: any[] = [];
+                  if (response && Array.isArray(response.$values)) people = response.$values;
+                  else if (Array.isArray(response)) people = response;
+                  const found = people.find(p => p.id === this.selectedPersonId);
+                  if (found) {
+                    const cust: Customer = {
+                      id: found.id,
+                      firstName: found.firstName || found.nombre || '',
+                      lastName: found.lastName || found.apellido || '',
+                      email: found.email || found.correo || ''
+                    };
+                    setCustomerFrom(cust);
+                  }
+                }
+              });
+            }
+          }
 
           // Clear existing items
           while (this.items.length) {

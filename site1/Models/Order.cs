@@ -40,6 +40,13 @@ namespace MessageApi.Models
         public int Number { get; set; }
 
         /// <summary>
+        /// Estado de la orden (e.g., PENDING, COMPLETED, CANCELLED)
+        /// </summary>
+        [Required]
+        [StringLength(50)]
+        public string Status { get; set; } = "PENDING";
+
+        /// <summary>
         /// ID del usuario que creó el registro.
         /// </summary>
         [Required(ErrorMessage = "El ID del usuario creador es obligatorio")]

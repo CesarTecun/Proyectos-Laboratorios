@@ -42,6 +42,39 @@ namespace MessageApi.Services
         }
 
         /// <summary>
+        /// Actualiza únicamente el estado de una orden y retorna la orden resultante
+        /// </summary>
+        public async Task<OrderReadDto?> UpdateStatusAsync(int id, string status, int updatedBy)
+        {
+            if (id <= 0) throw new ArgumentOutOfRangeException(nameof(id));
+            if (string.IsNullOrWhiteSpace(status)) throw new ArgumentNullException(nameof(status));
+
+            // Canonicalizar a códigos: PENDING | COMPLETED | CANCELLED
+            var s = status.Trim().ToUpperInvariant();
+            string normalized = s switch
+            {
+                "PENDIENTE" or "PENDING" => "PENDING",
+                "COMPLETED" or "COMPLETADA" => "COMPLETED",
+                "CANCELLED" or "CANCELED" or "CANCELADA" => "CANCELLED",
+                _ => "PENDING"
+            };
+
+            var existing = await _orderRepository.GetByIdAsync(id);
+            if (existing == null) return null;
+
+            var ok = await _orderRepository.UpdateStatusAsync(id, normalized, updatedBy);
+            if (!ok) return null;
+
+            var updated = await _orderRepository.GetByIdAsync(id);
+            if (updated == null) return null;
+
+            var dto = _mapper.Map<OrderReadDto>(updated);
+            var person = await _personRepository.GetPersonByIdAsync(updated.PersonId);
+            dto.PersonName = person != null ? $"{person.FirstName} {person.LastName}" : "Cliente no encontrado";
+            return dto;
+        }
+
+        /// <summary>
         /// Crea una nueva orden de forma asíncrona.
         /// </summary>
         /// <param name="orderDto">DTO con los datos de la orden a crear</param>
@@ -129,6 +162,16 @@ namespace MessageApi.Services
             // Obtener el nombre de la persona
             var person = await _personRepository.GetPersonByIdAsync(order.PersonId);
             result.PersonName = person != null ? $"{person.FirstName} {person.LastName}" : "Cliente no encontrado";
+
+            // Completar nombres de ítems para cada detalle
+            if (result.OrderDetails != null)
+            {
+                foreach (var detail in result.OrderDetails)
+                {
+                    var item = await _itemRepository.GetItemByIdAsync(detail.ItemId);
+                    detail.ItemName = item?.Name ?? $"Item #{detail.ItemId}";
+                }
+            }
             
             return result;
         }
@@ -149,6 +192,16 @@ namespace MessageApi.Services
                 // Obtener el nombre de la persona
                 var person = await _personRepository.GetPersonByIdAsync(order.PersonId);
                 orderDto.PersonName = person != null ? $"{person.FirstName} {person.LastName}" : "Cliente no encontrado";
+
+                // Completar nombres de ítems en cada detalle
+                if (orderDto.OrderDetails != null)
+                {
+                    foreach (var detail in orderDto.OrderDetails)
+                    {
+                        var item = await _itemRepository.GetItemByIdAsync(detail.ItemId);
+                        detail.ItemName = item?.Name ?? $"Item #{detail.ItemId}";
+                    }
+                }
                 
                 result.Add(orderDto);
             }

@@ -83,7 +83,7 @@ export class OrderListComponent implements OnInit {
   // Get status badge class
   getStatusClass(status: string): string {
     switch (status?.toUpperCase()) {
-      case 'PENDING':
+      case 'PENDIENTE':
         return 'bg-warning';
       case 'COMPLETED':
         return 'bg-success text-white';
@@ -130,16 +130,28 @@ export class OrderListComponent implements OnInit {
   applyFilters(): void {
     if (!this.orders) return;
 
-    const searchTerm = this.searchTerm.toLowerCase();
+    const searchTerm = this.normalize(this.searchTerm);
+    const normalizedStatusFilter = this.normalizeStatus(this.statusFilter);
 
     this.filteredOrders = this.orders.filter(order => {
-      const matchesSearch =
-        (order.customerName?.toLowerCase().includes(searchTerm) || false) ||
-        order.id?.toString().includes(searchTerm) ||
-        (order.customerEmail?.toLowerCase().includes(searchTerm) || false);
+      // Search by number, id, customer name/email, and status label/code
+      const numberStr = (order.number ?? '').toString();
+      const idStr = (order.id ?? '').toString();
+      const name = this.normalize(order.customerName || '');
+      const email = this.normalize(order.customerEmail || '');
+      const statusCode = this.normalizeStatus(order.status);
+      const statusText = this.normalize(this.statusLabel(order.status));
 
-      const matchesStatus = !this.statusFilter ||
-        (order.status && order.status.toUpperCase() === this.statusFilter.toUpperCase());
+      const matchesSearch = !searchTerm ||
+        numberStr.includes(searchTerm) ||
+        idStr.includes(searchTerm) ||
+        name.includes(searchTerm) ||
+        email.includes(searchTerm) ||
+        statusCode.toLowerCase().includes(searchTerm) ||
+        statusText.includes(searchTerm);
+
+      const matchesStatus = !normalizedStatusFilter ||
+        (this.normalizeStatus(order.status) === normalizedStatusFilter);
 
       return matchesSearch && matchesStatus;
     });
@@ -158,16 +170,16 @@ export class OrderListComponent implements OnInit {
           bValue = b.id || 0;
           break;
         case 'customerName':
-          aValue = (a.customerName || '').toLowerCase();
-          bValue = (b.customerName || '').toLowerCase();
+          aValue = this.normalize(a.customerName || '');
+          bValue = this.normalize(b.customerName || '');
           break;
         case 'total':
           aValue = this.getOrderTotal(a);
           bValue = this.getOrderTotal(b);
           break;
         case 'status':
-          aValue = a.status || '';
-          bValue = b.status || '';
+          aValue = this.normalizeStatus(a.status);
+          bValue = this.normalizeStatus(b.status);
           break;
         default:
           aValue = a[this.sortKey as keyof OrderReadDto];
@@ -183,11 +195,34 @@ export class OrderListComponent implements OnInit {
     this.currentPage = Math.min(this.currentPage, this.totalPages);
   }
 
+  // Reset to page 1 on search change
   onSearchChange(): void {
+    this.currentPage = 1;
     this.applyFilters();
   }
 
+  // Reset to page 1 on status filter change
   onStatusFilterChange(): void {
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  // When changing sort key from select
+  setSortKey(key: string): void {
+    if (this.sortKey === key) {
+      this.sortDir = this.sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortKey = key as any;
+      this.sortDir = 'asc';
+    }
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  // When changing page size from select
+  setPageSize(size: number): void {
+    this.pageSize = Number(size) || this.pageSize;
+    this.currentPage = 1;
     this.applyFilters();
   }
 
@@ -217,6 +252,34 @@ export class OrderListComponent implements OnInit {
     }
   }
 
+  // UI helper: translate status codes to human labels
+  statusLabel(status: string | undefined): string {
+    const s = (status || '').toUpperCase();
+    if (s === 'PENDIENTE' || s === 'PENDING') return 'Pendiente';
+    if (s === 'COMPLETED') return 'Completada';
+    if (s === 'CANCELLED' || s === 'CANCELED') return 'Cancelada';
+    return status || 'Pendiente';
+  }
+
+  // Normalize status to canonical codes for filtering/sorting
+  normalizeStatus(s?: string): 'PENDING' | 'COMPLETED' | 'CANCELLED' | '' {
+    const v = (s ?? '').trim().toUpperCase();
+    if (v === 'PENDIENTE' || v === 'PENDING') return 'PENDING';
+    if (v === 'COMPLETED' || v === 'COMPLETADA') return 'COMPLETED';
+    if (v === 'CANCELLED' || v === 'CANCELED' || v === 'CANCELADA') return 'CANCELLED';
+    return '';
+  }
+
+  // Normalize text for search/sort (lowercase and strip diacritics)
+  private normalize(text: string): string {
+    return (text || '')
+      .toString()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}+/gu, '')
+      .trim();
+  }
+
   reload(): void {
     this.isLoading.set(true);
     this.loadOrders();
@@ -238,17 +301,29 @@ export class OrderListComponent implements OnInit {
     this.isSaving = true;
     this.orderService.updateStatus(orderId, status).subscribe({
       next: (updatedOrder) => {
+        // Si backend devuelve la orden, actualizamos la lista local; si no, recargamos desde API
         if (updatedOrder) {
           const index = this.orders.findIndex(o => o.id === orderId);
           if (index !== -1) {
             this.orders[index] = updatedOrder;
-            this.applyFilters();
-            this.snackBar.open('Estado de la orden actualizado', 'Cerrar', { duration: 3000 });
           }
+          // Debug: verificar estado recibido
+          console.debug('Estado actualizado desde backend:', updatedOrder?.status, 'para orden', updatedOrder?.id);
+          // Forzar change detection en la colección
+          this.orders = [...this.orders];
+          // Resetear filtro para que la orden no desaparezca al cambiar de estado
+          this.statusFilter = '';
+          this.applyFilters();
+          this.snackBar.open('Estado de la orden actualizado', 'Cerrar', { duration: 3000 });
+          this.isSaving = false;
         } else {
-          this.snackBar.open('No se pudo actualizar el estado de la orden', 'Cerrar', { duration: 3000 });
+          // Fallback: recargar órdenes para reflejar el estado desde la BD
+          this.loadOrders();
+          this.statusFilter = '';
+          this.applyFilters();
+          this.snackBar.open('Estado actualizado (refrescado)', 'Cerrar', { duration: 3000 });
+          this.isSaving = false;
         }
-        this.isSaving = false;
       },
       error: (err) => {
         console.error('Error updating order status:', err);
@@ -327,7 +402,7 @@ export class OrderListComponent implements OnInit {
       customerName: '',
       customerEmail: '',
       items: [],
-      status: 'PENDING'
+      status: 'PENDIENTE'
     };
   }
 }

@@ -35,6 +35,9 @@ export class CustomerListComponent implements OnInit {
   page = 1;                             // Página actual
   pageSize = 10;                        // Tamaño de página
 
+  // Tick de UI para forzar recomputación de computed() cuando cambian props no-signal
+  private uiTick = signal<number>(0);
+
   constructor(private personService: PersonService) {}
 
   /** Al iniciar el componente se cargan los clientes */
@@ -47,9 +50,12 @@ export class CustomerListComponent implements OnInit {
 
     this.personService.getPersons().subscribe({
       next: data => {
-        // Normaliza fechas para que sean objetos Date válidos
-        const mapped = (data || []).map(p => ({
+        // Normaliza campos y fechas (acepta alias nombre/apellido/correo)
+        const mapped = (data || []).map((p: any) => ({
           ...p,
+          firstName: p.firstName ?? p.nombre ?? '',
+          lastName:  p.lastName  ?? p.apellido ?? '',
+          email:     p.email     ?? p.correo   ?? '',
           createdAt: p.createdAt ? new Date(p.createdAt) : null
         }));
         this.persons.set(mapped);
@@ -69,22 +75,28 @@ export class CustomerListComponent implements OnInit {
    * ================================= */
   // Aplica búsqueda y ordenamiento
   filtered = computed(() => {
-    const q = this.query.trim().toLowerCase();
+    // Registrar dependencia con cambios de UI (query, sortKey, sortDir)
+    this.uiTick();
+    const q = this.normalize(this.query);
     const list = this.persons();
     if (!q) return this.sort(list); // si no hay búsqueda, solo ordenar
 
     // Filtra por nombre, apellido o correo
     return this.sort(
-      list.filter(p =>
-        (p.firstName || '').toLowerCase().includes(q) ||
-        (p.lastName  || '').toLowerCase().includes(q)  ||
-        (p.email     || '').toLowerCase().includes(q)
-      )
+      list.filter(p => {
+        const fn = this.normalize(p.firstName || p.nombre || '');
+        const ln = this.normalize(p.lastName  || p.apellido || '');
+        const em = this.normalize(p.email     || p.correo   || '');
+        const id = (p.id ?? '').toString();
+        return fn.includes(q) || ln.includes(q) || em.includes(q) || id.includes(q);
+      })
     );
   });
 
   // Retorna solo la página actual
   paged = computed(() => {
+    // Registrar dependencia con cambios de UI (page, pageSize)
+    this.uiTick();
     const start = (this.page - 1) * this.pageSize;
     return this.filtered().slice(start, start + this.pageSize);
   });
@@ -112,6 +124,8 @@ export class CustomerListComponent implements OnInit {
 
   goToPage(n: number) {
     this.page = Math.max(1, Math.min(n, this.totalPages() || 1));
+    // Notificar cambio a los computed
+    this.uiTick.update(v => v + 1);
   }
 
   nextPage() { this.goToPage(this.page + 1); }
@@ -123,8 +137,8 @@ export class CustomerListComponent implements OnInit {
     const dir = this.sortDir === 'asc' ? 1 : -1;
 
     return [...list].sort((a, b) => {
-      const va = (a?.[key] ?? '').toString().toLowerCase();
-      const vb = (b?.[key] ?? '').toString().toLowerCase();
+      const va = this.normalize((a?.[key] ?? '').toString());
+      const vb = this.normalize((b?.[key] ?? '').toString());
 
       // Orden especial para ID (numérico) y fecha
       if (key === 'id') return (a.id - b.id) * dir;
@@ -137,5 +151,15 @@ export class CustomerListComponent implements OnInit {
       // Para strings: comparar ignorando mayúsculas/minúsculas
       return va.localeCompare(vb) * dir;
     });
+  }
+
+  /** Normaliza texto: minúsculas y sin tildes */
+  private normalize(text: string): string {
+    return (text || '')
+      .toString()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}+/gu, '')
+      .trim();
   }
 }

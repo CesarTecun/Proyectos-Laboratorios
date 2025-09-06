@@ -21,6 +21,11 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/orders/order-edit/order-edit.component')
           .then(m => m.OrderEditComponent) 
       }
+      ,{
+        path: 'view/:id',
+        loadComponent: () => import('./pages/orders/order-view/order-view.component')
+          .then(m => m.OrderViewComponent)
+      }
     ]
   },
   { 

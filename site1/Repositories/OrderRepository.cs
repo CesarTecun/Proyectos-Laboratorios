@@ -318,6 +318,25 @@ namespace MessageApi.Repositories
             }
         }
 
+        /// <summary>
+        /// Actualiza únicamente el estado de una orden
+        /// </summary>
+        public async Task<bool> UpdateStatusAsync(int id, string status, int updatedBy)
+        {
+            using var connection = CreateConnection();
+            await connection.OpenAsync();
+
+            const string sql = @"
+                UPDATE Orders
+                SET Status = @Status,
+                    UpdatedBy = @UpdatedBy,
+                    UpdatedAt = GETUTCDATE()
+                WHERE Id = @Id";
+
+            var rows = await connection.ExecuteAsync(sql, new { Id = id, Status = status, UpdatedBy = updatedBy });
+            return rows > 0;
+        }
+
         #region IDisposable Support
 
         protected virtual void Dispose(bool disposing)

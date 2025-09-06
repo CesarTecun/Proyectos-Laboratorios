@@ -240,6 +240,46 @@ namespace HelloApi.Controllers
                 return StatusCode(500, "Error interno del servidor al eliminar la orden");
             }
         }
+
+        /// <summary>
+        /// Actualiza únicamente el estado de una orden
+        /// </summary>
+        public class StatusUpdateDto
+        {
+            public string Status { get; set; } = string.Empty;
+        }
+
+        /// <summary>
+        /// Endpoint para actualizar el estado de la orden (PATCH /api/orders/{id}/status)
+        /// </summary>
+        [HttpPatch("{id}/status")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<OrderReadDto>> UpdateStatus(int id, [FromBody] StatusUpdateDto body)
+        {
+            try
+            {
+                if (body == null || string.IsNullOrWhiteSpace(body.Status))
+                {
+                    return BadRequest("El estado es obligatorio");
+                }
+
+                // Usuario por defecto hasta implementar autenticación
+                var updatedBy = 1;
+                var updated = await _orderService.UpdateStatusAsync(id, body.Status, updatedBy);
+                if (updated == null)
+                {
+                    return NotFound();
+                }
+                return Ok(updated);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error al actualizar el estado de la orden {id}");
+                return StatusCode(500, "Error interno del servidor al actualizar el estado de la orden");
+            }
+        }
     }
 }
 

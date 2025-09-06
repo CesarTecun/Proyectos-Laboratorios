@@ -1,0 +1,87 @@
+<div class="container my-4" *ngIf="!isLoading(); else loadingTpl">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h2 class="h5 mb-1">Orden #{{ order()?.number || order()?.id }}</h2>
+      <p class="text-muted mb-0">Detalle de la orden</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button mat-raised-button color="primary" [routerLink]="['/orders/edit', order()?.id]">
+        <mat-icon>edit</mat-icon>
+        <span class="ms-1">Editar</span>
+      </button>
+      <button class="btn btn-outline-secondary" [routerLink]="['/orders/list']">
+        <mat-icon class="me-1">arrow_back</mat-icon>
+        Volver
+      </button>
+    </div>
+  </div>
+
+  <div class="alert alert-danger d-flex align-items-center" *ngIf="error()">
+    <mat-icon class="me-2">error</mat-icon>
+    <div>{{ error() }}</div>
+  </div>
+
+  <div class="card" *ngIf="order() as o">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-12 col-md-4">
+          <div class="text-muted">Cliente</div>
+          <div class="fw-medium">{{ o.customerName || '—' }}</div>
+          <div class="small text-muted" *ngIf="o.customerEmail">{{ o.customerEmail }}</div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="text-muted">Estado</div>
+          <span class="badge"
+                [ngClass]="{
+                  'bg-warning text-dark': normalizeStatus(o.status) === 'PENDING',
+                  'bg-success text-white': normalizeStatus(o.status) === 'COMPLETED',
+                  'bg-danger text-white': normalizeStatus(o.status) === 'CANCELLED'
+                }">
+            {{ statusLabel(o.status) }}
+          </span>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="text-muted">Creada</div>
+          <div>{{ o.createdAt | date:'short' }}</div>
+        </div>
+        <div class="col-6 col-md-2">
+          <div class="text-muted">Actualizada</div>
+          <div>{{ o.updatedAt ? (o.updatedAt | date:'short') : '—' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Producto</th>
+            <th class="text-end">Cantidad</th>
+            <th class="text-end">Precio</th>
+            <th class="text-end">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let it of (o.items || [])">
+            <td>{{ it.itemName || ('Item #' + it.itemId) }}</td>
+            <td class="text-end">{{ it.quantity }}</td>
+            <td class="text-end">{{ it.unitPrice | currency:'GTQ':'symbol':'1.2-2' }}</td>
+            <td class="text-end">{{ (it.unitPrice * it.quantity) | currency:'GTQ':'symbol':'1.2-2' }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="3" class="text-end">Total</th>
+            <th class="text-end">{{ getOrderTotal() | currency:'GTQ':'symbol':'1.2-2' }}</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="d-flex justify-content-center py-5">
+    <mat-spinner diameter="32"></mat-spinner>
+  </div>
+</ng-template>
