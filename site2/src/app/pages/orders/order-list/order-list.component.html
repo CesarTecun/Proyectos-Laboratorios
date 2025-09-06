@@ -1,296 +1,181 @@
-<!-- Contenedor principal con fondo gris claro -->
-<div class="min-h-screen bg-gray-50 p-6">
-  <!-- Tarjeta contenedora -->
-  <div class="max-w-7xl mx-auto">
-    <!-- Encabezado con título y botón de acción -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-800">Gestión de Órdenes</h1>
-        <p class="text-gray-600 text-sm">Administra y revisa todas las órdenes del sistema</p>
-      </div>
-      <button (click)="showNewOrderForm = !showNewOrderForm" 
-         class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
-        {{ showNewOrderForm ? 'Cancelar' : 'Nueva Orden' }}
+<div class="container my-4">
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h2 class="h4 mb-1">Órdenes</h2>
+      <p class="text-muted mb-0">Listado de órdenes del sistema.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <button mat-raised-button color="primary" [routerLink]="['/orders/new']">
+        <mat-icon>add</mat-icon>
+        <span class="ms-1 d-none d-md-inline">Nueva Orden</span>
+      </button>
+      <button class="btn btn-outline-secondary" (click)="reload()" [disabled]="isLoading()">
+        <span class="spinner-border spinner-border-sm me-1" *ngIf="isLoading()"></span>
+        Recargar
       </button>
     </div>
+  </div>
 
-    <!-- Formulario de nueva orden -->
-    <div *ngIf="showNewOrderForm" class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 mb-6 p-6">
-      <h2 class="text-lg font-medium text-gray-900 mb-4">Nueva Orden</h2>
-      
-      <form (ngSubmit)="createOrder()" class="space-y-4">
-        <!-- Selección de Cliente -->
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Cliente *</label>
-          <select 
-            [(ngModel)]="selectedPersonId" 
-            (change)="onPersonSelect(selectedPersonId)"
-            name="customer"
-            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            [disabled]="isLoadingPersons"
-            required>
-            <option [ngValue]="null">Seleccione un cliente</option>
-            <option *ngFor="let person of availablePersons" [ngValue]="person.id">
-              {{ person.firstName }} {{ person.lastName }} ({{ person.email }})
-            </option>
+  <!-- Error -->
+  <div class="alert alert-danger d-flex align-items-center" *ngIf="error()">
+    <mat-icon class="me-2">error</mat-icon>
+    <div>{{ error() }}</div>
+  </div>
+
+  <!-- Toolbar (búsqueda / estado / orden / dirección) -->
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row g-2 align-items-center">
+        <div class="col-12 col-md-4">
+          <label class="form-label mb-1">Buscar</label>
+          <input
+            class="form-control"
+            placeholder="Por #orden, cliente o email…"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchChange()"
+          />
+        </div>
+
+        <div class="col-6 col-md-3">
+          <label class="form-label mb-1">Estado</label>
+          <select
+            class="form-select"
+            [(ngModel)]="statusFilter"
+            (ngModelChange)="onStatusFilterChange()"
+          >
+            <option [ngValue]="''">Todos</option>
+            <option [ngValue]="'PENDING'">Pendiente</option>
+            <option [ngValue]="'COMPLETED'">Completada</option>
+            <option [ngValue]="'CANCELLED'">Cancelada</option>
           </select>
-          <div *ngIf="isLoadingPersons" class="mt-1 text-sm text-gray-500">Cargando clientes...</div>
         </div>
 
-        <div class="border-t border-gray-200 pt-4">
-          <h3 class="text-md font-medium text-gray-900">Productos</h3>
-          <p class="text-sm text-gray-500 mt-1">Agregue los productos a la orden</p>
+        <div class="col-6 col-md-3">
+          <label class="form-label mb-1">Ordenar por</label>
+          <select
+            class="form-select"
+            [(ngModel)]="sortKey"
+            (change)="applyFilters()"
+          >
+            <option value="createdAt">Fecha</option>
+            <option value="id">ID</option>
+            <option value="customerName">Cliente</option>
+            <option value="total">Total</option>
+            <option value="status">Estado</option>
+          </select>
         </div>
-        <!-- Detalles de la orden -->
-        <div *ngFor="let item of newOrder.orderDetails; let i = index" class="border border-gray-200 rounded-lg p-4">
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
-              <select [(ngModel)]="item.itemId" (change)="onItemChange(i)" 
-                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                <option *ngFor="let product of availableProducts" [value]="product.id">
-                  {{ product.name }} - ${{ product.price }}
-                </option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
-              <input type="number" [(ngModel)]="item.quantity" min="1"
-                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Precio Unitario</label>
-              <input type="number" [(ngModel)]="item.unitPrice" readonly
-                     class="w-full rounded-md border-gray-300 bg-gray-100">
-            </div>
-            <div class="flex items-end">
-              <button (click)="removeOrderItem(i)" 
-                      class="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-50">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                </svg>
-              </button>
-            </div>
+
+        <div class="col-6 col-md-2">
+          <label class="form-label mb-1">Dirección</label>
+          <div class="btn-group w-100" role="group" aria-label="Dirección de ordenamiento">
+            <button type="button" class="btn btn-outline-primary" [class.active]="sortDir==='asc'" (click)="sortDir='asc'; applyFilters()">Asc</button>
+            <button type="button" class="btn btn-outline-primary" [class.active]="sortDir==='desc'" (click)="sortDir='desc'; applyFilters()">Desc</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
 
-        <!-- Botón para agregar producto -->
-        <div class="flex justify-start">
-          <button (click)="addOrderItem()" type="button" 
-                  class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            <svg class="-ml-0.5 mr-1.5 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
-            </svg>
-            Agregar Producto
-          </button>
-        </div>
+  <!-- Tabla de órdenes -->
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Cliente</th>
+            <th>Total</th>
+            <th>Estado</th>
+            <th>Creada</th>
+            <th>Actualizada</th>
+            <th class="text-end">Acciones</th>
+          </tr>
+        </thead>
 
-        <!-- Botón para guardar la orden -->
-        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-          <button type="button" 
-                  (click)="showNewOrderForm = false"
-                  class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            Cancelar
-          </button>
-          <button type="submit" 
-                  [disabled]="isSaving"
-                  class="inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
-            <span *ngIf="!isSaving">Guardar Orden</span>
-            <svg *ngIf="isSaving" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          </button>
-        </div>
-      </form>
+        <!-- Loading State -->
+        <tbody *ngIf="isLoading()">
+          <tr *ngFor="let _ of [].constructor(5)">
+            <td colspan="7">
+              <div class="placeholder-glow">
+                <span class="placeholder col-1 me-2"></span>
+                <span class="placeholder col-3 me-2"></span>
+                <span class="placeholder col-1 me-2"></span>
+                <span class="placeholder col-2 me-2"></span>
+                <span class="placeholder col-2 me-2"></span>
+                <span class="placeholder col-2 me-2"></span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+
+        <!-- Orders List -->
+        <tbody *ngIf="!isLoading() && filteredOrders.length > 0">
+          <tr *ngFor="let order of pagedOrders">
+            <td>#{{ order.number || order.id }}</td>
+            <td class="text-truncate" style="max-width: 260px;" [title]="order.customerName">
+              {{ order.customerName || '—' }}
+              <small class="text-muted d-block" *ngIf="order.customerEmail">{{ order.customerEmail }}</small>
+            </td>
+            <td>{{ getOrderTotal(order) | currency }}</td>
+            <td>
+              <span class="badge" [ngClass]="{
+                'bg-warning text-dark': order.status === 'PENDING',
+                'bg-success': order.status === 'COMPLETED',
+                'bg-danger': order.status === 'CANCELLED' || order.status === 'CANCELED'
+              }">
+                {{ order.status || 'PENDING' }}
+              </span>
+            </td>
+            <td>{{ order.createdAt | date:'short' }}</td>
+            <td>{{ order.updatedAt ? (order.updatedAt | date:'short') : '—' }}</td>
+            <td class="text-end">
+              <button mat-icon-button color="primary" [routerLink]="['/orders', order.id]" matTooltip="Ver/Editar">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              <button mat-icon-button color="accent" (click)="updateOrderStatus(order.id, 'COMPLETED')" matTooltip="Marcar como completada" *ngIf="order.status !== 'COMPLETED'">
+                <mat-icon>check_circle</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="updateOrderStatus(order.id, 'CANCELLED')" matTooltip="Cancelar orden" *ngIf="order.status !== 'CANCELLED' && order.status !== 'CANCELED'">
+                <mat-icon>cancel</mat-icon>
+              </button>
+              <button mat-icon-button color="warn" (click)="deleteOrder(order.id)" matTooltip="Eliminar">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+
+        <!-- Empty State -->
+        <tbody *ngIf="!isLoading() && filteredOrders.length === 0">
+          <tr>
+            <td colspan="7" class="text-center py-4">
+              <div class="text-muted">No se encontraron órdenes</div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
-    <!-- Tarjeta de la tabla -->
-    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
-      <!-- Barra de búsqueda y filtros -->
-      <div class="p-4 border-b border-gray-100">
-        <div class="flex flex-col sm:flex-row gap-3">
-          <div class="relative flex-grow">
-            <input type="text" 
-                   [(ngModel)]="searchTerm"
-                   (input)="onSearchChange()"
-                   class="block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                   placeholder="Buscar por cliente o ID...">
-          </div>
-          <select [(ngModel)]="statusFilter" 
-                 (change)="onStatusFilterChange()"
-                 class="block w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <option value="">Todos los estados</option>
-            <option value="Pendiente">Pendiente</option>
-            <option value="Completada">Completada</option>
-            <option value="Cancelada">Cancelada</option>
-          </select>
-        </div>
+    <!-- Paginación -->
+    <div class="card-footer d-flex flex-wrap align-items-center gap-2 justify-content-between" *ngIf="filteredOrders.length > 0">
+      <div class="text-muted small">
+        Mostrando {{ (currentPage - 1) * pageSize + 1 }}–{{ Math.min(currentPage * pageSize, filteredOrders.length) }} de {{ filteredOrders.length }}
       </div>
-
-      <!-- Tabla de órdenes -->
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                # Orden
-              </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Fecha
-              </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Cliente
-              </th>
-              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Total
-              </th>
-              <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <!-- Loading State with Skeleton -->
-            <tr *ngIf="isLoading">
-              <td colspan="5" class="px-6 py-4">
-                <div class="space-y-4">
-                  <!-- Skeleton Rows -->
-                  <div class="animate-pulse space-y-3">
-                    <div *ngFor="let i of [1,2,3]" class="grid grid-cols-12 gap-4">
-                      <div class="h-4 bg-gray-200 rounded col-span-2"></div>
-                      <div class="h-4 bg-gray-200 rounded col-span-3"></div>
-                      <div class="h-4 bg-gray-200 rounded col-span-2"></div>
-                      <div class="h-4 bg-gray-200 rounded col-span-3"></div>
-                      <div class="h-4 bg-gray-200 rounded col-span-2"></div>
-                    </div>
-                  </div>
-                  <!-- Loading Spinner -->
-                  <div class="flex justify-center py-4">
-                    <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-
-            <!-- Mensaje cuando no hay órdenes -->
-            <tr *ngIf="!isLoading && orders.length === 0">
-              <td colspan="5" class="px-6 py-8 text-center">
-                <div class="text-gray-500">
-                  <h3 class="text-base font-medium text-gray-900">No hay órdenes</h3>
-                  <p class="mt-1 text-sm text-gray-500">Comienza creando una nueva orden.</p>
-                  <div class="mt-4">
-                    <a routerLink="/orders/new" class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors">
-                      Crear orden
-                    </a>
-                  </div>
-                </div>
-              </td>
-            </tr>
-
-            <!-- Lista de órdenes -->
-            <tr *ngFor="let order of filteredOrders" class="hover:bg-gray-50 transition-colors duration-150">
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">#{{ order.number || order.id }}</div>
-                <div class="text-xs text-gray-500">
-                  <span [ngClass]="getStatusClass(order.status)">
-                    {{ order.status || 'Pendiente' }}
-                  </span>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">{{ order.createdAt | date:'mediumDate' }}</div>
-                <div class="text-xs text-gray-500">{{ order.createdAt | date:'shortTime' }}</div>
-              </td>
-              <td class="px-6 py-4">
-                <div class="flex items-center">
-                  <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-blue-100 rounded-full">
-                    <span class="text-blue-600 font-medium">{{ order.personName ? order.personName.charAt(0).toUpperCase() : '?' }}</span>
-                  </div>
-                  <div class="ml-4">
-                    <div class="text-sm font-medium text-gray-900">{{ order.personName || 'Cliente no especificado' }}</div>
-                    <div class="text-xs text-gray-500">ID: {{ order.personId || 'N/A' }}</div>
-                  </div>
-                </div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-semibold text-gray-900">${{ getOrderTotal(order) | number:'1.2-2' }}</div>
-                <div class="text-xs text-gray-500">{{ order.orderDetails.length || 0 }} {{ order.orderDetails.length === 1 ? 'artículo' : 'artículos' }}</div>
-              </td>
-              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="flex flex-col sm:flex-row justify-end items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                  <!-- Estado de la orden -->
-                  <div class="relative">
-                    <select [(ngModel)]="order.status" 
-                            (change)="updateOrderStatus(order, order.status || 'Pendiente')"
-                            class="text-sm rounded-md border-gray-300 py-1 pl-2 pr-8 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                            [ngClass]="getStatusClass(order.status)">
-                      <option [ngClass]="getStatusClass('Pendiente')" [value]="'Pendiente'">Pendiente</option>
-                      <option [ngClass]="getStatusClass('Completada')" [value]="'Completada'">Completada</option>
-                      <option [ngClass]="getStatusClass('Cancelada')" [value]="'Cancelada'">Cancelada</option>
-                    </select>
-                  </div>
-                  
-                  <!-- Botones de acción -->
-                  <div class="flex space-x-1">
-                    <button [routerLink]="['/orders', order.id]" 
-                            class="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-blue-50 transition-colors"
-                            title="Ver detalles">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                      </svg>
-                    </button>
-                    <button (click)="deleteOrder(order.id)" 
-                            class="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50 transition-colors"
-                            title="Eliminar orden">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pie de tabla con paginación -->
-      <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-        <div class="flex-1 flex justify-between sm:hidden">
-          <button class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-            Anterior
+      <div class="d-flex align-items-center gap-2">
+        <select class="form-select form-select-sm w-auto" [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange()">
+          <option [ngValue]="5">5 por página</option>
+          <option [ngValue]="10">10 por página</option>
+          <option [ngValue]="25">25 por página</option>
+          <option [ngValue]="50">50 por página</option>
+        </select>
+        <div class="btn-group">
+          <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="currentPage === 1" (click)="previousPage()" matTooltip="Página anterior">
+            <mat-icon>chevron_left</mat-icon>
           </button>
-          <button class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-            Siguiente
+          <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="currentPage === totalPages" (click)="nextPage()" matTooltip="Página siguiente">
+            <mat-icon>chevron_right</mat-icon>
           </button>
-        </div>
-        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-          <div>
-            <p class="text-sm text-gray-700">
-              Mostrando <span class="font-medium">1</span> a <span class="font-medium">10</span> de <span class="font-medium">20</span> resultados
-            </p>
-          </div>
-          <div>
-            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-              <a href="#" class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Anterior
-              </a>
-              <a href="#" aria-current="page" class="z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                1
-              </a>
-              <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                2
-              </a>
-              <a href="#" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium">
-                3
-              </a>
-              <a href="#" class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                Siguiente
-              </a>
-            </nav>
-          </div>
         </div>
       </div>
     </div>

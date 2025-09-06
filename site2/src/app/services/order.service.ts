@@ -20,20 +20,24 @@ export interface OrderDetailReadDto {
 }
 
 export interface OrderCreateDto {
-  personId: number;
-  createdBy: number; // User ID who created the order
-  orderDetails: OrderItemDto[];
+  customerName: string;
+  customerEmail: string;
+  items: OrderItemDto[];
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface OrderReadDto {
   id: number;
   number: number;
-  personId: number;
-  personName: string;
+  customerName: string;
+  customerEmail: string;
+  items: OrderItemDto[];
+  status: string;
   createdAt: string;
+  updatedAt?: string;
   totalAmount: number;
-  status?: string;
-  orderDetails: OrderDetailReadDto[];
 }
 
 @Injectable({
@@ -55,9 +59,10 @@ export class OrderService {
   }
 
   /**
-   * Get a single order by ID
+   * Get order by ID
    */
-  getOrderById(id: number): Observable<OrderReadDto | null> {
+  getOrder(id: number): Observable<OrderReadDto | null> {
+    if (!id) return of(null);
     return this.http.get<OrderReadDto>(`${this.apiUrl}/${id}`).pipe(
       catchError(() => of(null))
     );
@@ -67,15 +72,9 @@ export class OrderService {
    * Create a new order
    */
   createOrder(order: OrderCreateDto): Observable<OrderReadDto | null> {
-    // Set default createdBy if not provided
-    const orderToCreate = {
-      ...order,
-      createdBy: order.createdBy || 1 // Default user ID
-    };
-    
-    return this.http.post<OrderReadDto>(this.apiUrl, orderToCreate).pipe(
-      catchError(err => {
-        console.error('Error creating order:', err);
+    return this.http.post<OrderReadDto>(this.apiUrl, order).pipe(
+      catchError((error) => {
+        console.error('Error creating order:', error);
         return of(null);
       })
     );
@@ -84,10 +83,24 @@ export class OrderService {
   /**
    * Update an existing order
    */
-  updateOrder(id: number, order: OrderCreateDto): Observable<boolean> {
-    return this.http.put(`${this.apiUrl}/${id}`, order, { observe: 'response' }).pipe(
-      map(response => response.status === 204),
-      catchError(() => of(false))
+  updateOrder(id: number, order: Partial<OrderCreateDto>): Observable<OrderReadDto | null> {
+    return this.http.put<OrderReadDto>(`${this.apiUrl}/${id}`, order).pipe(
+      catchError((error) => {
+        console.error('Error updating order:', error);
+        return of(null);
+      })
+    );
+  }
+
+  /**
+   * Update order status
+   */
+  updateStatus(id: number, status: string): Observable<OrderReadDto | null> {
+    return this.http.patch<OrderReadDto>(`${this.apiUrl}/${id}/status`, { status }).pipe(
+      catchError((error) => {
+        console.error('Error updating order status:', error);
+        return of(null);
+      })
     );
   }
 
@@ -95,8 +108,8 @@ export class OrderService {
    * Delete an order
    */
   deleteOrder(id: number): Observable<boolean> {
-    return this.http.delete(`${this.apiUrl}/${id}`, { observe: 'response' }).pipe(
-      map(response => response.status === 204),
+    return this.http.delete<boolean>(`${this.apiUrl}/${id}`).pipe(
+      map(() => true),
       catchError(() => of(false))
     );
   }

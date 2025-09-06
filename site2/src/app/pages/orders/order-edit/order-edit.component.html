@@ -6,32 +6,48 @@
   <mat-card-content>
     <form [formGroup]="orderForm" (ngSubmit)="onSubmit()" class="order-form">
       <div class="row">
-        <div class="col-md-12">
+        <div class="col-md-6">
           <mat-form-field appearance="outline" class="w-100">
-            <mat-label>Cliente</mat-label>
-            <mat-select formControlName="personId" required>
-              <mat-option *ngFor="let person of persons" [value]="person.id">
-                {{ person.name }}
+            <mat-label>Buscar Cliente</mat-label>
+            <input type="text"
+                   matInput
+                   [formControl]="customerNameControl"
+                   [matAutocomplete]="auto"
+                   placeholder="Escriba para buscar...">
+            <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayCustomer" (optionSelected)="onCustomerSelected($event)">
+              <mat-option *ngFor="let customer of filteredCustomers | async" [value]="customer">
+                <div>
+                  <div>{{customer.firstName}} {{customer.lastName}}</div>
+                  <small class="text-muted">{{customer.email}}</small>
+                </div>
               </mat-option>
-            </mat-select>
-            <mat-error *ngIf="orderForm.get('personId')?.hasError('required')">
-              El cliente es requerido
+            </mat-autocomplete>
+            <mat-hint>Seleccione un cliente de la lista</mat-hint>
+          </mat-form-field>
+        </div>
+        <div class="col-md-6">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Correo Electrónico</mat-label>
+            <input matInput type="email" formControlName="customerEmail" required [readonly]="true">
+            <mat-error *ngIf="orderForm.get('customerEmail')?.hasError('required')">
+              Seleccione un cliente de la lista
             </mat-error>
+            <mat-hint>Se llenará automáticamente al seleccionar un cliente</mat-hint>
           </mat-form-field>
         </div>
       </div>
       
       <!-- Sección de ítems de la orden -->
-      <div formArrayName="orderItems" class="mt-4">
+      <div formArrayName="items" class="mt-4">
         <h3>Productos</h3>
-        <div *ngFor="let item of orderItems.controls; let i=index" [formGroupName]="i" class="item-row mb-3 p-3 border rounded">
+        <div *ngFor="let item of items.controls; let i=index" [formGroupName]="i" class="item-row mb-3 p-3 border rounded">
           <div class="row align-items-center">
             <div class="col-md-6">
               <mat-form-field appearance="outline" class="w-100">
                 <mat-label>Producto</mat-label>
                 <mat-select formControlName="itemId" required>
-                  <mat-option *ngFor="let item of items" [value]="item.id">
-                    {{ item.name }} - ${{ item.price }}
+                  <mat-option *ngFor="let product of products" [value]="product.id">
+                    {{ product.name }} - ${{ product.price }}
                   </mat-option>
                 </mat-select>
                 <mat-error *ngIf="item.get('itemId')?.hasError('required')">
@@ -63,7 +79,7 @@
         
         <div class="mt-2">
           <button mat-button color="primary" type="button" (click)="addItem()">
-            <mat-icon>add</mat-icon> Agregar Ítem
+            Agregar Ítem
           </button>
         </div>
       </div>
