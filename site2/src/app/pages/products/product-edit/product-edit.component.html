@@ -78,7 +78,7 @@
             mat-raised-button 
             color="primary" 
             type="submit"
-            [disabled]="productForm.invalid || isLoading">
+            [disabled]="productForm.invalid || isLoading || false"> <!-- controlar activar o desactivar false activo true desactivado -->
             <mat-icon *ngIf="!isLoading">{{ isEditMode ? 'save' : 'add' }}</mat-icon>
             <mat-spinner *ngIf="isLoading" diameter="24"></mat-spinner>
             {{ isEditMode ? 'Guardar Cambios' : 'Crear Producto' }}

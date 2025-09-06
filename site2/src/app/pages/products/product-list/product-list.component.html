@@ -1,15 +1,24 @@
 <div class="container my-4">
-  <!-- Header -->
+  <!-- 
+    Encabezado de la vista:
+    - Título y descripción del listado.
+    - Acciones globales: crear producto y recargar datos.
+    - El botón "Recargar" se deshabilita cuando isLoading() es true.
+  -->
   <div class="d-flex align-items-center justify-content-between mb-3">
     <div>
       <h2 class="h4 mb-1">Productos</h2>
       <p class="text-muted mb-0">Listado de productos registrados en el sistema.</p>
     </div>
     <div class="d-flex gap-2">
+      <!-- Navega al formulario de creación -->
+       <!--quitar el routerlink para que no funcione -->
       <button mat-raised-button color="primary" [routerLink]="['/products/new']">
         <mat-icon>add</mat-icon>
         <span class="ms-1 d-none d-md-inline">Nuevo Producto</span>
       </button>
+
+      <!-- Recarga datos desde API; muestra spinner mientras isLoading() -->
       <button class="btn btn-outline-secondary" (click)="reload()" [disabled]="isLoading()">
         <span class="spinner-border spinner-border-sm me-1" *ngIf="isLoading()"></span>
         Recargar
@@ -17,7 +26,12 @@
     </div>
   </div>
 
-  <!-- Barra de herramientas (búsqueda / orden) -->
+  <!-- 
+    Barra de herramientas:
+    - Búsqueda: actualiza signal query con ngModelChange y reaplica filtro.
+    - Orden por campo: setea sortKey y reinicia a página 1.
+    - Dirección de orden: usa helper setDir('asc'|'desc').
+  -->
   <div class="card mb-3">
     <div class="card-body">
       <div class="row g-2 align-items-center">
@@ -33,6 +47,7 @@
           />
         </div>
 
+        <!-- Selector de campo para ordenar; al cambiar, vuelve a página 1 -->
         <div class="col-6 col-md-3">
           <label class="form-label mb-1">Ordenar por</label>
           <select
@@ -48,6 +63,7 @@
           </select>
         </div>
 
+        <!-- Botones de dirección de orden; indican estado activo por clase -->
         <div class="col-6 col-md-3">
           <label class="form-label mb-1">Dirección</label>
           <div class="btn-group d-flex" role="group" aria-label="Dirección de ordenamiento">
@@ -71,13 +87,24 @@
     </div>
   </div>
 
-  <!-- Error -->
+  <!-- 
+    Mensaje de error:
+    - Visible solo si error() tiene contenido.
+    - Ícono Material para enfatizar el estado.
+  -->
   <div class="alert alert-danger d-flex align-items-center" *ngIf="error()">
     <mat-icon class="me-2">error</mat-icon>
     <div>{{ error() }}</div>
   </div>
 
-  <!-- Tabla -->
+  <!-- 
+    Tabla de resultados:
+    - Tres estados en <tbody>:
+      1) Cargando: skeleton proporcional a pageSize() para evitar saltos.
+      2) Datos: renderiza filas de paged().
+      3) Vacío: mensaje cuando no hay resultados y no está cargando.
+    - Acciones por fila: editar (navega) y eliminar (confirma y borra).
+  -->
   <div class="card">
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
@@ -93,11 +120,12 @@
           </tr>
         </thead>
 
-        <!-- Loading skeleton (usa pageSize para evitar “saltos”) -->
+        <!-- Estado: cargando (skeleton). Genera N filas según pageSize(). -->
         <tbody *ngIf="isLoading()">
           <tr *ngFor="let _ of [].constructor(pageSize())">
             <td colspan="7">
               <div class="placeholder-glow">
+                <!-- Columnas simuladas para mantener altura y ritmo visual -->
                 <span class="placeholder col-1 me-2"></span>
                 <span class="placeholder col-3 me-2"></span>
                 <span class="placeholder col-1 me-2"></span>
@@ -109,18 +137,31 @@
           </tr>
         </tbody>
 
-        <!-- Datos -->
+        <!-- Estado: con datos -->
         <tbody *ngIf="!isLoading() && paged().length > 0">
           <tr *ngFor="let p of paged()">
             <td>{{ p.id }}</td>
-            <td class="fw-medium text-truncate" style="max-width: 260px;" [title]="p.name">{{ p.name || '—' }}</td>
+
+            <!-- Texto truncado para nombres largos; title muestra completo al hover -->
+            <td class="fw-medium text-truncate" style="max-width: 260px;" [title]="p.name">
+              {{ p.name || '—' }}
+            </td>
+
+            <!-- Precio con pipe currency (según i18n de la app) -->
             <td>{{ p.price | currency }}</td>
+
+            <!-- Descripción truncada; muestra 'Sin descripción' si falta -->
             <td class="text-truncate" style="max-width: 320px;" [title]="p.description">
               {{ p.description || 'Sin descripción' }}
             </td>
+
+            <!-- Fechas legibles; 'Nunca' si updatedAt no existe -->
             <td>{{ p.createdAt | date:'short' }}</td>
             <td>{{ p.updatedAt ? (p.updatedAt | date:'short') : 'Nunca' }}</td>
+
+            <!-- Acciones alineadas a la derecha -->
             <td class="text-end">
+              <!-- Editar: navegación a ruta /products/edit/:id -->
               <button
                 mat-icon-button
                 color="primary"
@@ -130,6 +171,8 @@
               >
                 <mat-icon>edit</mat-icon>
               </button>
+
+              <!-- Eliminar: protegido contra id undefined; abre confirmación -->
               <button
                 mat-icon-button
                 color="warn"
@@ -144,7 +187,7 @@
           </tr>
         </tbody>
 
-        <!-- Vacío -->
+        <!-- Estado: sin resultados (no cargando y lista paged() vacía) -->
         <tbody *ngIf="!isLoading() && paged().length === 0">
           <tr>
             <td colspan="7" class="text-center py-4 text-muted">
@@ -155,7 +198,12 @@
       </table>
     </div>
 
-    <!-- Paginación -->
+    <!-- 
+      Pie de la tarjeta: controles de paginación
+      - Texto "Mostrando X–Y de Z" usa signals page(), pageSize(), endItem(), totalItems().
+      - Selector de tamaño de página: invoca setPageSize(size).
+      - Botones « y »: prev/next con deshabilitado en extremos.
+    -->
     <div class="card-footer d-flex flex-wrap align-items-center gap-2 justify-content-between">
       <div class="text-muted small">
         Mostrando {{ (page() - 1) * pageSize() + 1 }}–
@@ -163,6 +211,7 @@
       </div>
 
       <div class="d-flex align-items-center gap-2">
+        <!-- Tamaño de página; reinicia a página 1 al cambiar -->
         <select
           class="form-select form-select-sm w-auto"
           [ngModel]="pageSize()"
@@ -174,6 +223,7 @@
           <option [ngValue]="25">25</option>
         </select>
 
+        <!-- Controles de navegación de páginas -->
         <div class="btn-group" role="group" aria-label="Paginación">
           <button
             class="btn btn-outline-secondary btn-sm"
