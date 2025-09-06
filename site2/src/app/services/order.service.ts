@@ -1,33 +1,39 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 export interface OrderItemDto {
   itemId: number;
   quantity: number;
   unitPrice: number;
+  itemName?: string;
+}
+
+export interface OrderDetailReadDto {
+  id: number;
+  itemId: number;
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
 }
 
 export interface OrderCreateDto {
   personId: number;
-  orderDate: string;
-  orderItems: OrderItemDto[];
+  createdBy: number; // User ID who created the order
+  orderDetails: OrderItemDto[];
 }
 
 export interface OrderReadDto {
   id: number;
+  number: number;
   personId: number;
-  orderDate: string;
+  personName: string;
+  createdAt: string;
   totalAmount: number;
-  status?: string; // Added status as an optional property
-  orderItems: {
-    id: number;
-    itemId: number;
-    itemName: string;
-    quantity: number;
-    unitPrice: number;
-  }[];
+  status?: string;
+  orderDetails: OrderDetailReadDto[];
 }
 
 @Injectable({
@@ -38,37 +44,60 @@ export class OrderService {
 
   constructor(private http: HttpClient) {}
 
+  /**
+   * Get all orders
+   */
   getOrders(): Observable<OrderReadDto[]> {
-    return new Observable(observer => {
-      this.http.get<any>(this.apiUrl).subscribe({
-        next: (response) => {
-          // Handle the response with $values property or direct array
-          const data = response.$values || response || [];
-          observer.next(Array.isArray(data) ? data : []);
-          observer.complete();
-        },
-        error: (err) => {
-          console.error('Error in OrderService:', err);
-          observer.next([]);
-          observer.complete();
-        }
-      });
-    });
+    return this.http.get<OrderReadDto[]>(this.apiUrl).pipe(
+      map(response => (Array.isArray(response) ? response : response['$values'] || [])),
+      catchError(() => of([]))
+    );
   }
 
-  getOrder(id: number): Observable<OrderReadDto> {
-    return this.http.get<OrderReadDto>(`${this.apiUrl}/${id}`);
+  /**
+   * Get a single order by ID
+   */
+  getOrderById(id: number): Observable<OrderReadDto | null> {
+    return this.http.get<OrderReadDto>(`${this.apiUrl}/${id}`).pipe(
+      catchError(() => of(null))
+    );
   }
 
-  createOrder(order: OrderCreateDto): Observable<OrderReadDto> {
-    return this.http.post<OrderReadDto>(this.apiUrl, order);
+  /**
+   * Create a new order
+   */
+  createOrder(order: OrderCreateDto): Observable<OrderReadDto | null> {
+    // Set default createdBy if not provided
+    const orderToCreate = {
+      ...order,
+      createdBy: order.createdBy || 1 // Default user ID
+    };
+    
+    return this.http.post<OrderReadDto>(this.apiUrl, orderToCreate).pipe(
+      catchError(err => {
+        console.error('Error creating order:', err);
+        return of(null);
+      })
+    );
   }
 
-  updateOrder(id: number, order: Partial<OrderCreateDto>): Observable<OrderReadDto> {
-    return this.http.put<OrderReadDto>(`${this.apiUrl}/${id}`, order);
+  /**
+   * Update an existing order
+   */
+  updateOrder(id: number, order: OrderCreateDto): Observable<boolean> {
+    return this.http.put(`${this.apiUrl}/${id}`, order, { observe: 'response' }).pipe(
+      map(response => response.status === 204),
+      catchError(() => of(false))
+    );
   }
 
-  deleteOrder(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  /**
+   * Delete an order
+   */
+  deleteOrder(id: number): Observable<boolean> {
+    return this.http.delete(`${this.apiUrl}/${id}`, { observe: 'response' }).pipe(
+      map(response => response.status === 204),
+      catchError(() => of(false))
+    );
   }
 }

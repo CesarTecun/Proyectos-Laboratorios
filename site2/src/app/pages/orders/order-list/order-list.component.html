@@ -8,10 +8,101 @@
         <h1 class="text-2xl font-bold text-gray-800">Gestión de Órdenes</h1>
         <p class="text-gray-600 text-sm">Administra y revisa todas las órdenes del sistema</p>
       </div>
-      <a routerLink="/orders/new" 
+      <button (click)="showNewOrderForm = !showNewOrderForm" 
          class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
-        Nueva Orden
-      </a>
+        {{ showNewOrderForm ? 'Cancelar' : 'Nueva Orden' }}
+      </button>
+    </div>
+
+    <!-- Formulario de nueva orden -->
+    <div *ngIf="showNewOrderForm" class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 mb-6 p-6">
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Nueva Orden</h2>
+      
+      <form (ngSubmit)="createOrder()" class="space-y-4">
+        <!-- Selección de Cliente -->
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Cliente *</label>
+          <select 
+            [(ngModel)]="selectedPersonId" 
+            (change)="onPersonSelect(selectedPersonId)"
+            name="customer"
+            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+            [disabled]="isLoadingPersons"
+            required>
+            <option [ngValue]="null">Seleccione un cliente</option>
+            <option *ngFor="let person of availablePersons" [ngValue]="person.id">
+              {{ person.firstName }} {{ person.lastName }} ({{ person.email }})
+            </option>
+          </select>
+          <div *ngIf="isLoadingPersons" class="mt-1 text-sm text-gray-500">Cargando clientes...</div>
+        </div>
+
+        <div class="border-t border-gray-200 pt-4">
+          <h3 class="text-md font-medium text-gray-900">Productos</h3>
+          <p class="text-sm text-gray-500 mt-1">Agregue los productos a la orden</p>
+        </div>
+        <!-- Detalles de la orden -->
+        <div *ngFor="let item of newOrder.orderDetails; let i = index" class="border border-gray-200 rounded-lg p-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+              <select [(ngModel)]="item.itemId" (change)="onItemChange(i)" 
+                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <option *ngFor="let product of availableProducts" [value]="product.id">
+                  {{ product.name }} - ${{ product.price }}
+                </option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+              <input type="number" [(ngModel)]="item.quantity" min="1"
+                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Precio Unitario</label>
+              <input type="number" [(ngModel)]="item.unitPrice" readonly
+                     class="w-full rounded-md border-gray-300 bg-gray-100">
+            </div>
+            <div class="flex items-end">
+              <button (click)="removeOrderItem(i)" 
+                      class="text-red-600 hover:text-red-800 p-2 rounded-full hover:bg-red-50">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botón para agregar producto -->
+        <div class="flex justify-start">
+          <button (click)="addOrderItem()" type="button" 
+                  class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <svg class="-ml-0.5 mr-1.5 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+            </svg>
+            Agregar Producto
+          </button>
+        </div>
+
+        <!-- Botón para guardar la orden -->
+        <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+          <button type="button" 
+                  (click)="showNewOrderForm = false"
+                  class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            Cancelar
+          </button>
+          <button type="submit" 
+                  [disabled]="isSaving"
+                  class="inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">
+            <span *ngIf="!isSaving">Guardar Orden</span>
+            <svg *ngIf="isSaving" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          </button>
+        </div>
+      </form>
     </div>
 
     <!-- Tarjeta de la tabla -->
@@ -21,14 +112,18 @@
         <div class="flex flex-col sm:flex-row gap-3">
           <div class="relative flex-grow">
             <input type="text" 
+                   [(ngModel)]="searchTerm"
+                   (input)="onSearchChange()"
                    class="block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
-                   placeholder="Buscar órdenes...">
+                   placeholder="Buscar por cliente o ID...">
           </div>
-          <select class="block w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-            <option>Filtrar por estado</option>
-            <option>Pendiente</option>
-            <option>Completada</option>
-            <option>Cancelada</option>
+          <select [(ngModel)]="statusFilter" 
+                 (change)="onStatusFilterChange()"
+                 class="block w-full sm:w-48 px-3 py-2 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <option value="">Todos los estados</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Completada">Completada</option>
+            <option value="Cancelada">Cancelada</option>
           </select>
         </div>
       </div>
@@ -94,54 +189,66 @@
             </tr>
 
             <!-- Lista de órdenes -->
-            <tr *ngFor="let order of orders" class="hover:bg-gray-50 transition-colors duration-150">
+            <tr *ngFor="let order of filteredOrders" class="hover:bg-gray-50 transition-colors duration-150">
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-medium text-gray-900">#{{ order.id }}</div>
-                <div class="text-xs text-gray-500">Orden {{ order.status || 'Pendiente' }}</div>
+                <div class="text-sm font-medium text-gray-900">#{{ order.number || order.id }}</div>
+                <div class="text-xs text-gray-500">
+                  <span [ngClass]="getStatusClass(order.status)">
+                    {{ order.status || 'Pendiente' }}
+                  </span>
+                </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm text-gray-900">{{ order.orderDate | date:'mediumDate' }}</div>
-                <div class="text-xs text-gray-500">{{ order.orderDate | date:'shortTime' }}</div>
+                <div class="text-sm text-gray-900">{{ order.createdAt | date:'mediumDate' }}</div>
+                <div class="text-xs text-gray-500">{{ order.createdAt | date:'shortTime' }}</div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
+              <td class="px-6 py-4">
                 <div class="flex items-center">
                   <div class="flex-shrink-0 h-10 w-10 flex items-center justify-center bg-blue-100 rounded-full">
-                    <span class="text-blue-600 font-medium">{{ order.personId ? 'C' + order.personId.toString().charAt(0) : '?' }}</span>
+                    <span class="text-blue-600 font-medium">{{ order.personName ? order.personName.charAt(0).toUpperCase() : '?' }}</span>
                   </div>
                   <div class="ml-4">
-                    <div class="text-sm font-medium text-gray-900">Cliente #{{ order.personId || 'N/A' }}</div>
-                    <div class="text-xs text-gray-500">Ver perfil</div>
+                    <div class="text-sm font-medium text-gray-900">{{ order.personName || 'Cliente no especificado' }}</div>
+                    <div class="text-xs text-gray-500">ID: {{ order.personId || 'N/A' }}</div>
                   </div>
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <div class="text-sm font-semibold text-gray-900">${{ order.totalAmount | number:'1.2-2' }}</div>
-                <div class="text-xs text-gray-500">3 artículos</div>
+                <div class="text-sm font-semibold text-gray-900">${{ getOrderTotal(order) | number:'1.2-2' }}</div>
+                <div class="text-xs text-gray-500">{{ order.orderDetails.length || 0 }} {{ order.orderDetails.length === 1 ? 'artículo' : 'artículos' }}</div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div class="flex justify-end space-x-1">
-                  <button [routerLink]="['/orders', order.id]" 
-                          class="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-blue-50 transition-colors"
-                          title="Ver detalles">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                    </svg>
-                  </button>
-                  <button [routerLink]="['/orders/edit', order.id]" 
-                          class="text-indigo-600 hover:text-indigo-900 p-2 rounded-full hover:bg-indigo-50 transition-colors"
-                          title="Editar orden">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                    </svg>
-                  </button>
-                  <button (click)="deleteOrder(order.id)" 
-                          class="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50 transition-colors"
-                          title="Eliminar orden">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                  </button>
+                <div class="flex flex-col sm:flex-row justify-end items-end sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                  <!-- Estado de la orden -->
+                  <div class="relative">
+                    <select [(ngModel)]="order.status" 
+                            (change)="updateOrderStatus(order, order.status || 'Pendiente')"
+                            class="text-sm rounded-md border-gray-300 py-1 pl-2 pr-8 focus:border-blue-500 focus:outline-none focus:ring-blue-500"
+                            [ngClass]="getStatusClass(order.status)">
+                      <option [ngClass]="getStatusClass('Pendiente')" [value]="'Pendiente'">Pendiente</option>
+                      <option [ngClass]="getStatusClass('Completada')" [value]="'Completada'">Completada</option>
+                      <option [ngClass]="getStatusClass('Cancelada')" [value]="'Cancelada'">Cancelada</option>
+                    </select>
+                  </div>
+                  
+                  <!-- Botones de acción -->
+                  <div class="flex space-x-1">
+                    <button [routerLink]="['/orders', order.id]" 
+                            class="text-blue-600 hover:text-blue-900 p-2 rounded-full hover:bg-blue-50 transition-colors"
+                            title="Ver detalles">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                      </svg>
+                    </button>
+                    <button (click)="deleteOrder(order.id)" 
+                            class="text-red-600 hover:text-red-900 p-2 rounded-full hover:bg-red-50 transition-colors"
+                            title="Eliminar orden">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </td>
             </tr>
